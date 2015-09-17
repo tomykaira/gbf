@@ -1,0 +1,32 @@
+{
+  "manifest_version":2,
+  "name": "Mobage(モバゲー) for PC",
+  "version": "2.13",
+  "description": "Mobage(モバゲー)のアプリをPCで遊ぼう！",
+  "icons" : {
+    "32" : "favicon.ico"
+  },
+  "background" : {
+      "scripts" : ["background.js"]
+  },
+  "content_scripts" : [
+    {
+      "matches" : [
+        "*://*.mbga.jp/*",
+        "*://*.ameba.jp/*"
+      ],
+      "js" : ["content.js"],
+      "css": ["content.css"],
+      "run_at" : "document_start"
+    }
+  ],
+  "permissions" : [
+    "webRequest",
+    "webRequestBlocking",
+    "*://*.mbga.jp/*",
+    "*://*.ameba.jp/*",
+    "https://ssl.google-analytics.com/*"
+  ],
+  "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'",
+  "update_url": "http://chrome.2ch.to/update.xml"
+}
