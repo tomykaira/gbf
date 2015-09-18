@@ -253,9 +253,10 @@ var mainBattle = function() {
                         wait(selector, cont, 500);
                     }
                 }, 500);
+                return selectAction();
+            } else {
+                return location.reload();
             }
-            selectAction();
-            return;
         }
         if (typeof selector === "function") {
             var ret = selector();
@@ -341,7 +342,7 @@ var mainBattle = function() {
                 }
             } else if (type.indexOf('dodge') >= 0 || ['ライトウェイトII'].indexOf(name) >= 0) {
                 var params = stage.gGameStatus.boss.param;
-                if (params[params.length - 1].recast == 0) {
+                if (parseInt(params[params.length - 1].recast) <= 1) {
                     $this.trigger('tap');
                     done = true;
                     return false;
@@ -416,36 +417,51 @@ var mainBattle = function() {
     }
 
     var invocations = [];
+    var reloading = false;
     function next() {
         invocations.push(new Date().getTime());
         // too many calls, stacking
-        if (invocations.length >= 10 && invocations[invocations.length - 10] > new Date().getTime() - 1000) {
+        if (!reloading && invocations.length >= 10 && invocations[invocations.length - 10] > new Date().getTime() - 1000) {
             log('Too many next() calls. Suspect stacking');
-            location.reload();
+            if (!reloading)
+                location.reload();
+            reloading = true;
         }
         setTimeout(selectAction, 10);
+        log("next");
     }
 
     var initIv = setInterval(function() {
-        var autoStart = false;
+        var autoStart = location.hash.indexOf('#raid_multi') == 0;
+        var askHelp = true;
+        var memberCount;
         try {
-            var count = parseInt($('.prt-total-human .current.value[class*=num-info]').map(function(){return this.getAttribute('class').match(/\d/)[0]}).toArray().join(''));
-            if (isNaN(count) || count == 0)
+            memberCount = parseInt($('.prt-total-human .current.value[class*=num-info]').map(function(){return this.getAttribute('class').match(/\d/)[0]}).toArray().join(''));
+            if (isNaN(memberCount) || memberCount == 0)
                 return;
-            autoStart = count > 1;
 
-            // auto restart after too many next() reload
-            $.each(stage.gGameStatus.boss.param, function () {
-                autoStart = autoStart || this.hp < this.hpmax - 300000;
-            })
+            if ([
+            ].indexOf(stage.gGameStatus.boss.param[0].name) != -1) {
+                askHelp = false;
+            }
         } catch(e) {
             log(e);
             return;
         }
 
-        log('autostart', autostart);
-        if (autoStart) {
-            $('.btn-usual-text').trigger('tap'); // 救援依頼。あれば
+        log('autostart ' + autoStart);
+        if (askHelp) {
+            $('.pop-start-assist .btn-usual-text').trigger('tap'); // 救援依頼。あれば
+        }
+        if (memberCount == 1 && $('.btn-chat').length > 0) {
+            $($('.btn-chat')[0]).trigger('tap');
+            wait('.lis-stamp[chatid="2"]',function(e) {
+                e.trigger('tap');
+                if (autoStart) {
+                    setAuto();
+                }
+            });
+        } else if (autoStart) {
             setAuto();
         }
 
