@@ -294,6 +294,10 @@ var mainBattle = function() {
         if (!isAuto) {
             return;
         }
+        if ($('.btn-result:visible').length > 0) {
+            $('.btn-result').trigger('tap');
+            return setTimeout(selectAction, 2000);
+        }
         if ($('.btn-attack-start.display-on').length == 0) {
             setTimeout(selectAction, 100);
             return;
@@ -417,18 +421,22 @@ var mainBattle = function() {
     }
 
     var invocations = [];
+    var invPtr = 0;
     var reloading = false;
     function next() {
-        invocations.push(new Date().getTime());
+        var now = new Date().getTime();
+        invocations[invPtr] = now;
+        invPtr = (invPtr + 1) % 10;
         // too many calls, stacking
-        if (!reloading && invocations.length >= 10 && invocations[invocations.length - 10] > new Date().getTime() - 1000) {
+        if (!reloading && invocations.length > invPtr && now - invocations[invPtr] < 2000) {
             log('Too many next() calls. Suspect stacking');
             if (!reloading)
                 location.reload();
             reloading = true;
         }
+        if (invocations.length > invPtr)
+            log(now - invocations[invPtr], "next");
         setTimeout(selectAction, 10);
-        log("next");
     }
 
     var initIv = setInterval(function() {
@@ -440,9 +448,17 @@ var mainBattle = function() {
             if (isNaN(memberCount) || memberCount == 0)
                 return;
 
-            if ([
-            ].indexOf(stage.gGameStatus.boss.param[0].name) != -1) {
+            var param = stage.gGameStatus.boss.param[0];
+            var bossName = param.name;
+            if (memberCount == 1 &&
+                (bossName.indexOf('ゲイザー') != -1)) {
                 askHelp = false;
+            }
+            if (('Lv90 アグネア' == bossName && memberCount < 5)
+                || ('Lv60 グガランナ' == bossName && memberCount < 2)) {
+                log('This enemy is strong. Wait other members.');
+                setTimeout(function () {location.reload();}, 30 * 1000);
+                autoStart = false;
             }
         } catch(e) {
             log(e);
@@ -450,6 +466,7 @@ var mainBattle = function() {
         }
 
         log('autostart ' + autoStart);
+        window.localStorage.autoMulti = false;
         if (askHelp) {
             $('.pop-start-assist .btn-usual-text').trigger('tap'); // 救援依頼。あれば
         }
@@ -473,12 +490,114 @@ var mainBattle = function() {
     window.Game.reportError = function() {};
 }
 
+var selectMultiBattle = function() {
+    if (window.localStorage.autoMulti !== true)
+        return;
+    var isAuto = false;
+    var hasPotion = true;
+
+    function log() {
+        console.__proto__.log.apply(console, arguments);
+    }
+
+    function wait(selector, cont, counter) {
+        if (typeof counter === "undefined")
+            counter = 500;
+        if (counter <= 0) {
+            log("wait() timed out", selector, cont);
+            var button = $('.btn-usual-ok,.btn-usual-close');
+            if (button.length > 0) {
+                button.trigger('tap');
+                setTimeout(function () {
+                    if ($('.prt-popup-body').text() == '') {
+                        log("Error is cleared. Retry");
+                        wait(selector, cont, 500);
+                    }
+                }, 500);
+                return selectAction();
+            } else {
+                return location.reload();
+            }
+        }
+        if (typeof selector === "function") {
+            var ret = selector();
+            if (ret)
+                cont(ret);
+            else
+                setTimeout(function () { wait(selector, cont, counter - 1); }, 20);
+        } else {
+            var match = $(selector);
+            if (match.length > 0)
+                cont(match);
+            else
+                setTimeout(function () { wait(selector, cont, counter - 1); }, 20);
+        }
+    }
+
+    var interestedEnemies = ['アグニス討伐戦'];
+    setTimeout(function() {
+        try {
+            var myBP = parseInt($('.prt-user-bp-value').prop('title'));
+            if (isNaN(myBP)) {
+                log("my BP is NaN");
+                return location.reload();
+            }
+            $('.prt-raid-info').each(function() {
+                var $this = $(this);
+                var name = $this.find('.txt-raid-name').text();
+                var required = parseInt($this.find('.prt-use-ap').data('ap'));
+                if (interestedEnemies.indexOf(name) != -1 && required <= myBP) {
+                    $this.trigger('tap');
+                    return false;
+                }
+            });
+        } catch (e) {
+            log("Exception", e);
+            return location.reload();
+        }
+    }, 5000); // wait until page is fully rendered
+}
+
 var autoSelectParty = function() {
     function log() {
         console.__proto__.log.apply(console, arguments);
     }
 
-    var intervalId = setInterval(function () {
+    function wait(selector, cont, counter) {
+        if (typeof counter === "undefined")
+            counter = 500;
+        if (counter <= 0) {
+            log("wait() timed out", selector, cont);
+            var button = $('.btn-usual-ok,.btn-usual-close');
+            if (button.length > 0) {
+                button.trigger('tap');
+                setTimeout(function () {
+                    if ($('.prt-popup-body').text() == '') {
+                        log("Error is cleared. Retry");
+                        wait(selector, cont, 500);
+                    }
+                }, 500);
+                return selectAction();
+            } else {
+                return location.reload();
+            }
+        }
+        if (typeof selector === "function") {
+            var ret = selector();
+            if (ret)
+                cont(ret);
+            else
+                setTimeout(function () { wait(selector, cont, counter - 1); }, 20);
+        } else {
+            var match = $(selector);
+            if (match.length > 0)
+                cont(match);
+            else
+                setTimeout(function () { wait(selector, cont, counter - 1); }, 20);
+        }
+    }
+
+    var iid1 = setInterval(function () {
         var select = $('.prt-deck-select:visible');
         var toMyId = {
             1: 0,
@@ -490,9 +609,23 @@ var autoSelectParty = function() {
         };
         if (select.length > 0) {
             select.flexslider(toMyId[parseInt($('[class*=icon-supporter-type].selected').not('.unselected').data('type'))]);
-            clearInterval(intervalId);
+            clearInterval(iid1);
+
+            var go = $('.pop-deck .btn-usual-ok');
+            if (localStorage.autoMulti === true && go.length > 0) {
+                go.trigger('tap');
+            }
         }
     }, 100);
+
+    var iid2 = setInterval(function () {
+        var go = $('.btn-supporter');
+        if (localStorage.autoMulti === true && go.length > 0) {
+            $(go[0]).trigger('tap');
+            clearInterval(iid2);
+        }
+    }, 100);
+
     window.Game.reportError = function() {};
 }
 
@@ -519,6 +652,12 @@ if (location.href.match(/gbf.game.mbga.jp.*casino\/game\/poker\//)) {
 if (location.href.match(/gbf.game.mbga.jp.*raid/)) {
     setTimeout(function () {
         attachJs(mainBattle);
+    }, 2000);
+}
+
+if (location.href.match(/gbf.game.mbga.jp.*#quest\/assist/)) {
+    setTimeout(function () {
+        attachJs(selectMultiBattle);
     }, 2000);
 }
 
