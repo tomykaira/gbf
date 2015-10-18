@@ -438,29 +438,39 @@ var mainBattle = function() {
         setTimeout(next, 100);
     }
 
-    var loadTime = new Date().getTime();
-    var invocations = [];
-    var invPtr = 0;
-    var reloading = false;
     function next() {
-        var now = new Date().getTime();
-        invocations[invPtr] = now;
-        invPtr = (invPtr + 1) % 10;
-        // too many calls, stacking
-        if (location.hash.indexOf('#raid') == 0 &&
-            now - loadTime > 10000 &&
-            !reloading && invocations.length > invPtr &&
-            now - invocations[invPtr] < 2000) {
-            log('Too many next() calls. Suspect stacking', now - loadTime, now - invocations[invPtr], invocations, invPtr);
-            if (!reloading)
-                location.reload();
-            reloading = true;
-        }
         setTimeout(selectAction, 10);
     }
 
+    var prevHpSum = - 1;
+    var hpRecorded = 0;
+    var restartIv = setInterval(function () {
+        if (stage && stage.gGameStatus && stage.gGameStatus.boss && !stage.gGameStatus.boss.all_dead) {
+            var sum = 0;
+            stage.gGameStatus.boss.param.forEach(function (elm) {
+                sum += parseInt(elm.hp);
+            });
+            if (sum == 0) {
+                next();
+                return;
+            }
+            if (prevHpSum != sum) {
+                prevHpSum = sum;
+                hpRecorded = new Date().getTime();
+                return;
+            }
+            if ((new Date().getTime() - hpRecorded) >= 20 * 1000) {
+                log("Enemy hp does not change", sum, hpRecorded);
+                window.localStorage.restartAuto = isAuto ? 'true' : 'false';
+                location.reload();
+                clearInterval(restartIv);
+            }
+        }
+    }, 500);
+
     var initIv = setInterval(function() {
-        var autoStart = location.hash.indexOf('#raid_multi') == 0;
+        var autoStart = location.hash.indexOf('#raid_multi') == 0 || window.localStorage.restartAuto == 'true';
+        window.localStorage.restartAuto = 'false';
         var askHelp = true;
         var memberCount;
         try {
