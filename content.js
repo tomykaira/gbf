@@ -244,19 +244,7 @@ var mainBattle = function() {
             counter = 500;
         if (counter <= 0) {
             log("wait() timed out", selector, cont);
-            var button = $('.btn-usual-ok,.btn-usual-close');
-            if (button.length > 0) {
-                button.trigger('tap');
-                setTimeout(function () {
-                    if ($('.prt-popup-body').text() == '') {
-                        log("Error is cleared. Retry");
-                        wait(selector, cont, 500);
-                    }
-                }, 500);
-                return selectAction();
-            } else {
-                return location.reload();
-            }
+            return location.reload();
         }
         if (typeof selector === "function") {
             var ret = selector();
@@ -275,7 +263,6 @@ var mainBattle = function() {
 
     function setAuto() {
         isAuto = true;
-        hasPotion = true;
         selectAction();
     }
 
@@ -291,18 +278,30 @@ var mainBattle = function() {
     }
 
     function selectAction() {
+        var elm;
         if (!isAuto) {
             return;
         }
-        if ($('.btn-result:visible').length > 0) {
-            $('.btn-result').trigger('tap');
+        if ((elm = $('.btn-result:visible')).length > 0) {
+            elm.trigger('tap');
             return setTimeout(selectAction, 2000);
+        }
+        if ((elm = $('.btn-usual-ok:visible,.btn-usual-close:visible')).length > 0 && elm.parents('.pop-result-use-potion').length == 0) {
+            elm.trigger('tap');
+            return next();
         }
         if ($('.btn-attack-start.display-on').length == 0) {
             setTimeout(selectAction, 100);
             return;
         }
         var done = false;
+        // 複数回バトルの最後以外は攻撃のみ
+        var battleNums = $('.prt-battle-num .txt-info-num').children()
+        if (battleNums.length > 0 && battleNums[0].className != battleNums[battleNums.length - 1].className) {
+            $('.btn-attack-start').trigger('tap');
+            setTimeout(next, 100);
+            return;
+        }
         $('[ability-recast=0]').each(function () {
             if (done)
                 return false;
@@ -351,6 +350,13 @@ var mainBattle = function() {
                     done = true;
                     return false;
                 }
+            } else if ('ディレイ'.indexOf(name) >= 0) {
+                var params = stage.gGameStatus.boss.param;
+                if (parseInt(params[params.length - 1].recast) < parseInt(params[params.length - 1].recastmax)) {
+                    $this.trigger('tap');
+                    done = true;
+                    return false;
+                }
             } else {
                 $this.trigger('tap');
                 done = true;
@@ -373,6 +379,7 @@ var mainBattle = function() {
             done = true;
             return;
         }
+        hasPotion = parseInt(stage.gGameStatus.temporary.large) > 0;
         if (hasPotion) {
             var deadly = true;
             for (var i = 0; i < 4; i++) {
@@ -382,7 +389,6 @@ var mainBattle = function() {
                 log("using potion");
                 $('.btn-temporary').trigger('tap');
                 wait('.item-large img', function(e) {
-                    hasPotion = parseInt($('.item-large .having-num').text()) > 0;
                     if (hasPotion) {
                         e.trigger('tap');
                         wait('.btn-usual-use',function(e) {
@@ -416,10 +422,23 @@ var mainBattle = function() {
                 return;
             }
         }
+        var assist = $('.btn-assist:visible');
+        if (assist.length > 0 && !assist.hasClass('disable') && (!hasPotion || stage.gGameStatus.turn >= 10 || stage.gGameStatus.lose)) {
+            $('.btn-assist:visible').trigger('tap');
+            wait('.pop-start-assist .btn-usual-text', function(e) {
+                e.trigger('tap');
+                wait('.btn-usual-ok:visible', function(e) {
+                    e.trigger('tap');
+                    next();
+                })
+            });
+            return;
+        }
         $('.btn-attack-start').trigger('tap');
         setTimeout(next, 100);
     }
 
+    var loadTime = new Date().getTime();
     var invocations = [];
     var invPtr = 0;
     var reloading = false;
@@ -428,14 +447,15 @@ var mainBattle = function() {
         invocations[invPtr] = now;
         invPtr = (invPtr + 1) % 10;
         // too many calls, stacking
-        if (!reloading && invocations.length > invPtr && now - invocations[invPtr] < 2000) {
-            log('Too many next() calls. Suspect stacking');
+        if (location.hash.indexOf('#raid') == 0 &&
+            now - loadTime > 10000 &&
+            !reloading && invocations.length > invPtr &&
+            now - invocations[invPtr] < 2000) {
+            log('Too many next() calls. Suspect stacking', now - loadTime, now - invocations[invPtr], invocations, invPtr);
             if (!reloading)
                 location.reload();
             reloading = true;
         }
-        if (invocations.length > invPtr)
-            log(now - invocations[invPtr], "next");
         setTimeout(selectAction, 10);
     }
 
@@ -451,11 +471,15 @@ var mainBattle = function() {
             var param = stage.gGameStatus.boss.param[0];
             var bossName = param.name;
             if (memberCount == 1 &&
-                (bossName.indexOf('ゲイザー') != -1)) {
+                ((bossName.indexOf('ゲイザー') != -1) ||
+                 (bossName == 'Lv30 スカジ') ||
+                 (bossName == 'Lv50 ディアドラ')
+                 )) {
                 askHelp = false;
             }
             if (('Lv90 アグネア' == bossName && memberCount < 5)
-                || ('Lv60 グガランナ' == bossName && memberCount < 2)) {
+                || ('Lv60 グガランナ' == bossName && memberCount < 2)
+                || ('Lv75 エメラルドホーン' == bossName && memberCount < 2)) {
                 log('This enemy is strong. Wait other members.');
                 setTimeout(function () {location.reload();}, 30 * 1000);
                 autoStart = false;
@@ -466,7 +490,7 @@ var mainBattle = function() {
         }
 
         log('autostart ' + autoStart);
-        window.localStorage.autoMulti = false;
+        window.localStorage.autoMulti = 'false';
         if (askHelp) {
             $('.pop-start-assist .btn-usual-text').trigger('tap'); // 救援依頼。あれば
         }
@@ -491,7 +515,7 @@ var mainBattle = function() {
 }
 
 var selectMultiBattle = function() {
-    if (window.localStorage.autoMulti !== true)
+    if (window.localStorage.autoMulti !== 'true')
         return;
     var isAuto = false;
     var hasPotion = true;
@@ -534,7 +558,7 @@ var selectMultiBattle = function() {
         }
     }
 
-    var interestedEnemies = ['アグニス討伐戦'];
+    var interestedEnemies = ['アグニス討伐戦', 'Lv40 ゲイザー', 'Lv30 スカジ'];
     setTimeout(function() {
         try {
             var myBP = parseInt($('.prt-user-bp-value').prop('title'));
@@ -542,23 +566,26 @@ var selectMultiBattle = function() {
                 log("my BP is NaN");
                 return location.reload();
             }
+            var selected = false;
             $('.prt-raid-info').each(function() {
                 var $this = $(this);
                 var name = $this.find('.txt-raid-name').text();
                 var required = parseInt($this.find('.prt-use-ap').data('ap'));
                 if (interestedEnemies.indexOf(name) != -1 && required <= myBP) {
                     $this.trigger('tap');
+                    selected = true;
                     return false;
                 }
             });
+            if (!selected)
+                return location.reload();
         } catch (e) {
             log("Exception", e);
-            return location.reload();
         }
     }, 5000); // wait until page is fully rendered
 }
 
-var autoSelectParty = function() {
+var basicAutoPlay = function() {
     function log() {
         console.__proto__.log.apply(console, arguments);
     }
@@ -609,10 +636,9 @@ var autoSelectParty = function() {
         };
         if (select.length > 0) {
             select.flexslider(toMyId[parseInt($('[class*=icon-supporter-type].selected').not('.unselected').data('type'))]);
-            clearInterval(iid1);
 
             var go = $('.pop-deck .btn-usual-ok');
-            if (localStorage.autoMulti === true && go.length > 0) {
+            if (localStorage.autoMulti === 'true' && go.length > 0) {
                 go.trigger('tap');
             }
         }
@@ -620,11 +646,36 @@ var autoSelectParty = function() {
 
     var iid2 = setInterval(function () {
         var go = $('.btn-supporter');
-        if (localStorage.autoMulti === true && go.length > 0) {
-            $(go[0]).trigger('tap');
+        if (localStorage.autoMulti === 'true' && go.length > 0) {
             clearInterval(iid2);
+            // すぐやると属性の石がえらばれない場合がある
+            setTimeout(function () {
+                $(go[0]).trigger('tap');
+            }, 200);
         }
     }, 100);
+
+    var iid3 = setInterval(function () {
+        var button = $('.btn-command-forward:visible:not(.disable)');
+        if (button.length > 0) {
+            setTimeout(function() {button.trigger('tap');}, 100);
+        }
+    }, 500);
+
+    var cooldown = new Date().getTime();
+    var iid4 = setInterval(function() {
+        var button = $('.cnt-quest-scene > .btn-skip');
+        if (button.length > 0 && cooldown < new Date().getTime()) {
+            button.trigger('tap');
+            cooldown = new Date().getTime() + 10000;
+            setTimeout(function() {
+                var elm;
+                if (location.href.indexOf('quest/scene') > 0 && (elm = $('.btn-usual-ok:visible,.btn-usual-close:visible')).length > 0 && elm.parents('.pop-result-use-potion').length == 0) {
+                    elm.trigger('tap');
+                }
+            }, 200);
+        }
+    }, 500);
 
     window.Game.reportError = function() {};
 }
@@ -663,7 +714,7 @@ if (location.href.match(/gbf.game.mbga.jp.*#quest\/assist/)) {
 
 if (location.href.match(/gbf.game.mbga.jp/)) {
     setTimeout(function () {
-        attachJs(autoSelectParty);
+        attachJs(basicAutoPlay);
     }, 1000);
 }
 
