@@ -82,6 +82,37 @@ var f = function(){
     window.innerWidth = 480;
 };
 
+var bahaAttackHelp = function() {
+    function log() {
+        console.__proto__.log.apply(console, arguments);
+    }
+
+    setInterval(function() {
+        var e;
+        e = $('img[src*="btn_call_1.png"]:visible');
+        if (e.length > 0) {
+            e.trigger('click');
+            return;
+        }
+        e = $('.ev-btn-rescue:visible');
+        if (e.length > 0) {
+            e.trigger('click');
+            return;
+        }
+        e = $('a:contains("モンスター一覧"):visible:first');
+        if (e.length > 0) {
+            location.href = $('a:contains("モンスター一覧"):visible:first').prop('href');
+            return;
+        }
+        e = $('.jsbtn.btnMain.attack:visible');
+        if (e.length > 0 && localStorage.attacked.indexOf(location.href.toString()) == -1) {
+            e.trigger('click');
+            localStorage.attacked += ',' + location.href.toString();
+            return;
+        }
+    }, 1000);
+}
+
 var casino = function(){
     function log() {
         console.__proto__.log.apply(console, arguments);
@@ -286,7 +317,9 @@ var mainBattle = function() {
             elm.trigger('tap');
             return setTimeout(selectAction, 2000);
         }
-        if ((elm = $('.btn-usual-ok:visible,.btn-usual-close:visible')).length > 0 && elm.parents('.pop-result-use-potion').length == 0) {
+        if ((elm = $('.btn-usual-ok:visible,.btn-usual-close:visible')).length > 0
+            && elm.parents('.pop-result-use-potion').length == 0
+            && elm.parents('.pop-friend-request').length == 0) {
             elm.trigger('tap');
             return next();
         }
@@ -329,8 +362,10 @@ var mainBattle = function() {
                     done = true;
                     return false;
                 }
-            } else if ('グロースラウド' == name) {
-                if (specialPercent >= 50) {
+            } else if (['守りは任せるっす！', 'グロースラウド'].indexOf(name) >= 0) {
+                // ゲージ消費系は避ける
+            } else if ('フェイント' == name) {
+                if (specialPercent >= 10) {
                     $this.trigger('tap');
                     done = true;
                     return false;
@@ -343,7 +378,7 @@ var mainBattle = function() {
                     done = true;
                     return false;
                 }
-            } else if (type.indexOf('dodge') >= 0 || ['ライトウェイトII'].indexOf(name) >= 0) {
+            } else if (type.indexOf('dodge') >= 0 || type.indexOf('damage_cut') >= 0 || ['ライトウェイトII'].indexOf(name) >= 0) {
                 var params = stage.gGameStatus.boss.param;
                 if (parseInt(params[params.length - 1].recast) <= 1) {
                     $this.trigger('tap');
@@ -459,7 +494,7 @@ var mainBattle = function() {
                 hpRecorded = new Date().getTime();
                 return;
             }
-            if ((new Date().getTime() - hpRecorded) >= 20 * 1000) {
+            if ((new Date().getTime() - hpRecorded) >= 30 * 1000) {
                 log("Enemy hp does not change", sum, hpRecorded);
                 window.localStorage.restartAuto = isAuto ? 'true' : 'false';
                 location.reload();
@@ -471,7 +506,7 @@ var mainBattle = function() {
     var initIv = setInterval(function() {
         var autoStart = location.hash.indexOf('#raid_multi') == 0 || window.localStorage.restartAuto == 'true';
         window.localStorage.restartAuto = 'false';
-        var askHelp = true;
+        var askHelp = memberCount > 1;
         var memberCount;
         try {
             memberCount = parseInt($('.prt-total-human .current.value[class*=num-info]').map(function(){return this.getAttribute('class').match(/\d/)[0]}).toArray().join(''));
@@ -480,17 +515,13 @@ var mainBattle = function() {
 
             var param = stage.gGameStatus.boss.param[0];
             var bossName = param.name;
-            if (memberCount == 1 &&
-                ((bossName.indexOf('ゲイザー') != -1) ||
-                 (bossName == 'Lv30 スカジ') ||
-                 (bossName == 'Lv50 ディアドラ')
-                 )) {
-                askHelp = false;
-            }
             if (('Lv90 アグネア' == bossName && memberCount < 5)
                 || ('Lv60 グガランナ' == bossName && memberCount < 2)
-                || ('Lv75 エメラルドホーン' == bossName && memberCount < 2)) {
+                || ('Lv75 エメラルドホーン' == bossName && memberCount < 2)
+                || ('Lv60 ジャック・オー・ランタン' == bossName && memberCount < 2)
+                || ('Lv75 パンプキンビースト' == bossName && memberCount < 2)) {
                 log('This enemy is strong. Wait other members.');
+                askHelp = true;
                 setTimeout(function () {location.reload();}, 30 * 1000);
                 autoStart = false;
             }
@@ -568,7 +599,7 @@ var selectMultiBattle = function() {
         }
     }
 
-    var interestedEnemies = ['アグニス討伐戦', 'Lv40 ゲイザー', 'Lv30 スカジ'];
+    var interestedEnemies = ['アグニス討伐戦', 'Lv40 ゲイザー', 'Lv30 スカジ', 'Lv30 ヒドラ', 'Lv40 パンプキンヘッド', 'Lv30 闘虫禍草'];
     setTimeout(function() {
         try {
             var myBP = parseInt($('.prt-user-bp-value').prop('title'));
@@ -655,13 +686,13 @@ var basicAutoPlay = function() {
     }, 100);
 
     var iid2 = setInterval(function () {
-        var go = $('.btn-supporter');
+        var go = $('.btn-supporter:visible');
         if (localStorage.autoMulti === 'true' && go.length > 0) {
             clearInterval(iid2);
             // すぐやると属性の石がえらばれない場合がある
             setTimeout(function () {
                 $(go[0]).trigger('tap');
-            }, 200);
+            }, 500);
         }
     }, 100);
 
@@ -669,6 +700,14 @@ var basicAutoPlay = function() {
         var button = $('.btn-command-forward:visible:not(.disable)');
         if (button.length > 0) {
             setTimeout(function() {button.trigger('tap');}, 100);
+        }
+        button = $('[data-buton-name=" イベントTOPへ"]:visible:not(.disable)');
+        if (button.length > 0) {
+            setTimeout(function() {button.trigger('tap');}, 1000);
+        }
+        button = $('.btn-control[data-location-href="quest"]:visible:not(.disable)');
+        if (button.length > 0) {
+            setTimeout(function() {button.trigger('tap');}, 1000);
         }
     }, 500);
 
@@ -686,6 +725,44 @@ var basicAutoPlay = function() {
             }, 200);
         }
     }, 500);
+    setInterval(function() {
+        if (location.href.match(/gbf.game.mbga.jp.*#event\/(treasureraid|teamraid)\d\d\d\/gacha\/result/) && $('.btn-reset').length == 0) {
+            $('.txt-available-times10').trigger('tap');
+        }
+    }, 500);
+
+    setInterval(function () {
+        var button = $('.btn-usual-join:visible:not(.disable)');
+        if (location.href.match(/gbf.game.mbga.jp.*#coopraid\/offer/) && button.length > 0) {
+            button.trigger('tap');
+        }
+    }, 100);
+
+    setInterval(function () {
+        var button = $('.btn-usual-join:visible:not(.disable)');
+        if (location.href.match(/gbf.game.mbga.jp.*#coopraid\/offer/) && button.length > 0) {
+            button.trigger('tap');
+        }
+    }, 100);
+
+    setInterval(function () {
+        if (localStorage.autoCoop == 'true') {
+            var button;
+            button = $('[data-buton-name="ルームへ"]:visible:not(.disable)');
+            if (button.length > 0) {
+                button.trigger('tap');
+            }
+            button = $('.pop-friend-request.pop-show .btn-usual-cancel:visible:not(.disable)');
+            if (button.length > 0) {
+                button.trigger('tap');
+            }
+            button = $('.btn-execute-ready:visible:not(.disable)');
+            if (button.length > 0) {
+                button.trigger('tap');
+            }
+        }
+
+    }, 100);
 
     window.Game.reportError = function() {};
 }
@@ -702,6 +779,12 @@ function attachJs(func) {
 if (location.href.match("sp.pf.mbga.jp")) {
     attachJs(f);
     document.getElementsByTagName('html')[0].style.zoom = "80%";
+}
+
+if (location.href.match('sp.pf.mbga.jp/12007160')) {
+    setTimeout(function () {
+        attachJs(bahaAttackHelp);
+    }, 1000);
 }
 
 if (location.href.match(/gbf.game.mbga.jp.*casino\/game\/poker\//)) {
