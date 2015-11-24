@@ -494,9 +494,9 @@ var mainBattle = function() {
                 hpRecorded = new Date().getTime();
                 return;
             }
-            if ((new Date().getTime() - hpRecorded) >= 30 * 1000) {
+            if ((new Date().getTime() - hpRecorded) >= 30 * 1000 && isAuto) {
                 log("Enemy hp does not change", sum, hpRecorded);
-                window.localStorage.restartAuto = isAuto ? 'true' : 'false';
+                window.localStorage.restartAuto = 'true';
                 location.reload();
                 clearInterval(restartIv);
             }
@@ -519,7 +519,9 @@ var mainBattle = function() {
                 || ('Lv60 グガランナ' == bossName && memberCount < 2)
                 || ('Lv75 エメラルドホーン' == bossName && memberCount < 2)
                 || ('Lv60 ジャック・オー・ランタン' == bossName && memberCount < 2)
-                || ('Lv75 パンプキンビースト' == bossName && memberCount < 2)) {
+                || ('Lv75 パンプキンビースト' == bossName && memberCount < 2)
+                || ('Lv60 マヒシャ' == bossName && memberCount < 2)
+                || ('Lv75 スーペルヒガンテ' == bossName && memberCount < 2)) {
                 log('This enemy is strong. Wait other members.');
                 askHelp = true;
                 setTimeout(function () {location.reload();}, 30 * 1000);
@@ -765,6 +767,102 @@ var basicAutoPlay = function() {
     }, 100);
 
     window.Game.reportError = function() {};
+
+
+    function tapImpl(selector, cont, allowNotFound) {
+        var waitCount = 1000;
+        var evt = document.createEvent('UIEvent');
+        evt.initUIEvent('tap', true, true);
+        evt.window = window;
+        function find() {
+            waitCount -= 1;
+            elem = document.querySelector(selector);
+            if (elem !== null) {
+                elem.dispatchEvent(evt);
+                setTimeout(cont, 1000);
+            } else if (waitCount <= 0) {
+                log('Could not find selector ' + selector);
+                if (allowNotFound) {
+                    setTimeout(cont, 1000);
+                }
+            } else {
+                setTimeout(find, 10);
+            }
+        }
+        find();
+    }
+
+    function tap(selector, cont) {
+        tapImpl(selector, cont, false);
+    }
+    function tapOptional(selector, cont) {
+        tapImpl(selector, cont, true);
+    }
+
+    // casino
+    function casinoSlot() {
+        tap('.prt-bet-one', function () {
+            tap('.prt-start', function() {
+                setTimeout(casinoSlot, 5000*(1+Math.random()));
+            });
+        });
+    }
+    window.casinoSlot = casinoSlot;
+
+    // repeat enhance
+    function enhanceWeapon(id) {
+        tap('.btn-head-pop', function () {
+            tap('.txt-global-present', function () {
+                tap('.btn-tabs.termed', function () {
+                    tap('#prt-present-limit .btn-get-all', function () {
+                        tap('.prt-popup-footer .btn-usual-ok', function () {
+                            tap('.prt-relation-button[data-key="1"]', function () {
+                                tap('.btn-enhancement-weapon', function () {
+                                    tap('.btn-weapon[data-weapon-id="'+id+'"]', function () {
+                                        tap('.btn-recommend', function () {
+                                            tap('.btn-synthesis', function () {
+                                                tapOptional('.prt-popup-footer .btn-usual-ok', function () {
+                                                    enhanceWeapon(id);
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+    window.enhanceWeapon = enhanceWeapon;
+
+    function enhanceSummon(id) {
+        tap('.btn-head-pop', function () {
+            tap('.txt-global-present', function () {
+                tap('.btn-tabs.termed', function () {
+                    tap('#prt-present-limit .btn-get-all', function () {
+                        tap('.prt-popup-footer .btn-usual-ok', function () {
+                            tap('.prt-relation-button[data-key="2"]', function () {
+                                tap('.btn-enhancement-summon', function () {
+                                    tap('.btn-summon[data-summon-id="' + id + '"]', function () {
+                                        tap('.btn-recommend', function () {
+                                            tap('.btn-synthesis', function () {
+                                                tapOptional('.prt-popup-footer .btn-usual-ok', function () {
+                                                    enhanceSummon(id);
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+    window.enhanceSummon = enhanceSummon;
 }
 
 function attachJs(func) {
