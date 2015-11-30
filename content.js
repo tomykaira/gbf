@@ -601,7 +601,7 @@ var selectMultiBattle = function() {
         }
     }
 
-    var interestedEnemies = ['アグニス討伐戦', 'Lv40 ゲイザー', 'Lv30 スカジ', 'Lv30 ヒドラ', 'Lv40 パンプキンヘッド', 'Lv30 闘虫禍草'];
+    var interestedEnemies = ['アグニス討伐戦', 'Lv40 ゲイザー', 'Lv30 スカジ', 'Lv30 ヒドラ', 'Lv40 パンプキンヘッド', 'Lv30 闘虫禍草', 'Lv40 ヨグ＝ソトース', 'Lv30 幽世の使徒'];
     setTimeout(function() {
         try {
             var myBP = parseInt($('.prt-user-bp-value').prop('title'));
@@ -700,16 +700,25 @@ var basicAutoPlay = function() {
 
     var iid3 = setInterval(function () {
         var button = $('.btn-command-forward:visible:not(.disable)');
+        var q;
         if (button.length > 0) {
-            setTimeout(function() {button.trigger('tap');}, 100);
+            setTimeout(function() {$('.btn-command-forward:visible:not(.disable)').trigger('tap');}, 1000);
         }
-        button = $('[data-buton-name=" イベントTOPへ"]:visible:not(.disable)');
-        if (button.length > 0) {
-            setTimeout(function() {button.trigger('tap');}, 1000);
+        q = '[data-buton-name="イベントTOPへ"]:visible:not(.disable)';
+        if ($(q).length > 0) {
+            setTimeout(function() {$(q).trigger('tap');}, 1000);
+        }
+        q = '[data-location-href="quest"]:visible:not(.disable)';
+        if (location.href.match('result_multi/empty')  && $(q).length > 0) {
+            setTimeout(function() {$(q).trigger('tap');}, 1000);
         }
         button = $('.btn-control[data-location-href="quest"]:visible:not(.disable)');
         if (button.length > 0) {
             setTimeout(function() {button.trigger('tap');}, 1000);
+        }
+        button = $('.pop-continue-quest-comfirm .btn-usual-ok:visible:not(.disable)');
+        if (button.length > 0) {
+            button.trigger('tap');
         }
     }, 500);
 
