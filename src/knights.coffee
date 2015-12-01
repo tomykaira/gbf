@@ -30,14 +30,20 @@ ngAuto = ->
       else
         MenuView::attack()
     if location.href.match(/raid.*battle.*boss/)
-      # if (localStorage.returningFromFlash === 'true') {
-      #     location.reload();
-      #     localStorage.onBack = 'false';
-      #     clearInterval(iid);
-      # } else {
-      #     tap('#js-bp1-attack');
-      #     clearInterval(iid);
-      # }
+      if (e = $('.escape-popup_btn')).length > 0
+        e.click()
+        clearInterval(iid)
+      tap '#popup-bg-area a[href*="escape"]'
+      if tap('.raid-appear-btn a[href*="mission"]')
+        wait '.exec-btn a[href*="mission"]', (e) ->
+          e[0].click()
+        return clearInterval(iid)
+      if localStorage.returningFromFlash == 'true'
+        localStorage.returningFromFlash = 'false'
+        location.reload()
+        return clearInterval(iid)
+      tap('#js-bp1-attack');
+      return clearInterval(iid);
     else
     if location.href.match(/flash.*pex/)
       localStorage.returningFromFlash = 'true'

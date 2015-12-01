@@ -20,6 +20,7 @@
           "build/common.js",
           "build/knights.js",
           "build/bahamut.js",
+          "build/imas.js",
           "build/gbf_casino.js",
           "build/gbf_battle.js",
           "build/gbf_auto.js",
@@ -37,6 +38,9 @@
     "*://*.mbga.jp/*",
     "*://*.ameba.jp/*",
     "https://ssl.google-analytics.com/*"
+  ],
+  "web_accessible_resources": [
+    "imas_images/*.jpg"
   ],
   "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'",
   "update_url": "http://chrome.2ch.to/update.xml"
