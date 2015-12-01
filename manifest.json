@@ -15,7 +15,18 @@
         "*://*.mbga.jp/*",
         "*://*.ameba.jp/*"
       ],
-      "js" : ["content.js"],
+      "js" : [
+          "build/base.js",
+          "build/common.js",
+          "build/knights.js",
+          "build/bahamut.js",
+          "build/gbf_casino.js",
+          "build/gbf_battle.js",
+          "build/gbf_auto.js",
+          "build/gbf_coop.js",
+          "build/gbf_commands.js",
+          "build/gbf_multi.js"
+      ],
       "css": ["content.css"],
       "run_at" : "document_start"
     }
