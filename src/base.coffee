@@ -20,16 +20,14 @@ loader = ->
       elm = $(selector + ':visible:not(.disable)')
       found = elm.length > 0
     if found
-      switch window.tapEvent
-        when 'raw'
-          if elm[0] and elm[0].click
-            elm[0].click()
-          if elm.click
-            elm.click()
-        when 'click'
-          elm.trigger('click')
-        else
-          elm.trigger('tap')
+      if elm.prop('href')?.indexOf('http://sp.pf.mbga.jp') == 0
+        if elm[0] and elm[0].click
+          elm[0].click()
+        if elm.click
+          elm.click()
+      else
+        elm.trigger('click')
+        elm.trigger('tap')
       return true
     false
 
