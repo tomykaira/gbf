@@ -18,69 +18,9 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 	  //filters
 	  {
 		    urls: [
-			      "*://sp.pf.mbga.jp/*",
+			      "*://*.mbga.jp/*",
 		    ]
 	  },
 	  //extraInfoSpec
 	  ["blocking", "requestHeaders"]
 );
-
-// グランブルー
-chrome.webRequest.onCompleted.addListener(
-	  function(details) {
-		    var $len = info.requestHeaders.length;
-		    for(var $i = 0; $i < $len ; $i++){
-			      if(info.requestHeaders[$i].name === 'User-Agent'){
-				        info.requestHeaders[$i].value = userAgent;
-				        break;
-			      }
-		    }
-		    return {requestHeaders: info.requestHeaders};
-	  },
-	  //filters
-	  {
-		    urls: [
-			      "*://gbf.game.mbga.jp/*/normal_attack_result.json",
-		    ]
-	  }
-);
-
-chrome.runtime.onConnect.addListener(function(port) {
-    switch (port.name) {
-    case 'gb_battle':
-
-        break;
-    }
-    console.assert(port.name == "knockknock");
-    port.onMessage.addListener(function(msg) {
-        if (msg.joke == "Knock knock")
-            port.postMessage({question: "Who's there?"});
-        else if (msg.answer == "Madame")
-            port.postMessage({question: "Madame who?"});
-        else if (msg.answer == "Madame... Bovary")
-            port.postMessage({question: "I don't get it."});
-    });
-});
-
-// function installCompleteListener() {
-//     chrome.webRequest.onCompleted.addListener(
-// 	      function (details) {
-// 		        var $len = info.requestHeaders.length;
-// 		        for(var $i = 0; $i < $len ; $i++){
-// 			          if(info.requestHeaders[$i].name === 'User-Agent'){
-// 				            info.requestHeaders[$i].value = userAgent;
-// 				            break;
-// 			          }
-// 		        }
-// 		        return {requestHeaders: info.requestHeaders};
-// 	      }
-//     );
-// }
-
-// chrome.extension.onMessage.addListener(function (request, sender, sendResponse) {
-//     switch (request.type) {
-//     case 'casino-start':
-//         installCompleteListener()
-//         break;
-//     }
-// })

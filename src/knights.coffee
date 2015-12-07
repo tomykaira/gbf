@@ -1,28 +1,9 @@
 ngAuto = ->
   window.tapEvent = 'raw'
-  wait = (selector, cont, counter) ->
-    if typeof counter == 'undefined'
-      counter = 500
-    if counter <= 0
-      console.log 'wait() timed out', selector, cont
-      return
-    elm = undefined
-    found = undefined
-    if typeof selector == 'function'
-      elm = selector()
-      found = elm
-    else
-      elm = $(selector + ':visible:not(.disable)')
-      found = elm.length > 0
-    if found and cont
-      cont elm
-    else
-      setTimeout (->
-        wait selector, cont, counter - 1
-      ), 20
-
 
   delete console
+  unless localStorage.todayCount
+    localStorage.todayCount = '0'
   iid = setInterval((->
     if location.href.match(/game.*mission.*result_lite/)
       if tap('#raid-boss-button')
@@ -30,23 +11,29 @@ ngAuto = ->
       else
         MenuView::attack()
     if location.href.match(/raid.*battle.*boss/)
+      if tap 'a[href*="2Fgame%2Fraid%2Fbattle%2Fescape%2F"]'
+        return clearInterval(iid)
       if (e = $('.escape-popup_btn')).length > 0
         e.click()
-        clearInterval(iid)
-      tap '#popup-bg-area a[href*="escape"]'
+        return
       if tap('.raid-appear-btn a[href*="mission"]')
         wait '.exec-btn a[href*="mission"]', (e) ->
-          e[0].click()
+          count = parseInt(localStorage.todayCount) + 1
+          localStorage.todayCount = count
+          console.log("Beat #{count} mobs")
+          if count >= 3
+            location.href = 'http://g12013914.sp.pf.mbga.jp/?url=http%3A%2F%2F125.6.161.10%2Fgame%2Fcollaborationevent%2Findex%2F27'
+          else
+            e[0].click()
         return clearInterval(iid)
       if localStorage.returningFromFlash == 'true'
         localStorage.returningFromFlash = 'false'
         location.reload()
         return clearInterval(iid)
-      tap('#js-bp1-attack');
-      return clearInterval(iid);
-    else
-    if location.href.match(/flash.*pex/)
-      localStorage.returningFromFlash = 'true'
+      if tap('#js-bp1-attack')
+        localStorage.returningFromFlash = 'true'
+        return clearInterval(iid);
+    if location.href.match(/flash.*pex/) && localStorage.returningFromFlash == 'true'
       history.back()
       clearInterval iid
     tap ->

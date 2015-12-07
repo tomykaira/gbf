@@ -25,6 +25,11 @@ bahaAttackHelp = ->
       canvas.dispatchEvent(createTouchEvent('touchstart'))
       canvas.dispatchEvent(createTouchEvent('touchend'))
 
+  setTimeout ->
+    if location.href.includes('%2Fquest_boss%2F') || location.href.includes('%2Fquest%2F')
+      tap('#shortcut_link_show')
+  , 300
+
   switch window.eventType
     when 'ap0'
       setInterval ->

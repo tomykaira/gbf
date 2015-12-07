@@ -1,3 +1,18 @@
+imasAuto = ->
+  window.tapEvent = 'raw'
+
+  delete console
+  iid = setInterval ->
+    if location.href.includes('quests%2Fwork')
+      Imascg.QuestModel.play()
+  , 500
+
+if location.href.includes('sp.pf.mbga.jp/12008305')
+  setTimeout (->
+    attachJs imasAuto
+  ), 1000
+
+
 showFuda = ->
   delete console
 
@@ -32,7 +47,6 @@ showFuda = ->
       offset += 1
 
   , 500
-
 
 if location.href.match(/sp.pf.mbga.jp\/12008305.*convert_game_center%2Fhanafuda%3Fl_frm%3DGame_center_1/)
   setTimeout (->

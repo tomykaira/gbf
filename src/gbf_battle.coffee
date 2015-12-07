@@ -59,6 +59,13 @@ mainBattle = ->
       setAuto()
     clearInterval initIv
   ), 100)
+
+  deadIv = setInterval((->
+    tap('.prt-tips-box')
+    tap('.pop-cheer .btn-cheer')
+
+  ), 500)
+
   autoButton = window.$('<input type="checkbox" style="position: fixed; top: 10px; left: 10px; width: 50px; height: 50px; z-index: 9999;" />')
 
   setAuto = ->
@@ -70,6 +77,10 @@ mainBattle = ->
     if isAuto
       setAuto()
 
+  window.addEventListener 'unload', ->
+    if isAuto
+      window.localStorage.restartAuto = 'true'
+
   hpRatio = (characterNum) ->
     parseInt $('.lis-character' + characterNum + ' .prt-gauge-hp-inner')[0].style.width
 
@@ -80,19 +91,41 @@ mainBattle = ->
     if (elm = $('.btn-result:visible')).length > 0
       elm.trigger 'tap'
       return setTimeout(selectAction, 2000)
-    if (elm = $('.btn-usual-ok:visible,.btn-usual-close:visible')).length > 0 and elm.parents('.pop-result-use-potion').length == 0 and elm.parents('.pop-friend-request').length == 0
+    if (elm = $('.btn-usual-ok:visible,.btn-usual-close:visible')).length > 0 and elm.parents('.pop-result-use-potion').length == 0 and elm.parents('.pop-friend-request').length == 0 and elm.parents('.pop-raid-menu').length == 0 and $('.prt-pop-header').text() != '離脱確認'
       elm.trigger 'tap'
       return next()
     if $('.btn-attack-start.display-on').length == 0
       setTimeout selectAction, 100
       return
+
     done = false
     # 複数回バトルの最後以外は攻撃のみ
     battleNums = $('.prt-battle-num .txt-info-num').children()
     if battleNums.length > 0 and battleNums[0].className != battleNums[battleNums.length - 1].className
+      $('[ability-recast=0]').each ->
+        $this = $(this)
+        name = $this.attr('ability-name')
+        if name == 'フォーカス'
+          $this.trigger 'tap'
+          done = true
+          return false
+      if done
+        next()
+        return
+      if $('.prt-battle-num .txt-info-num').children()[0].getAttribute('class') == 'num-info1' && stage.gGameStatus.turn == 1 && $('.btn-command-summon.summon-on').length > 0
+        $('.btn-command-summon').trigger 'tap'
+        wait '.summon-show .lis-summon.on', (o) ->
+          $(o[0]).trigger 'tap'
+          wait '.btn-summon-use:visible', (use) ->
+            use.trigger 'tap'
+            next()
+            return
+          return
+        return
       $('.btn-attack-start').trigger 'tap'
       setTimeout next, 100
       return
+
     $('[ability-recast=0]').each ->
       if done
         return false
@@ -147,7 +180,7 @@ mainBattle = ->
           $this.trigger 'tap'
           done = true
           return false
-      else if 'ディレイ'.indexOf(name) >= 0
+      else if name.indexOf('ディレイ') >= 0
         params = stage.gGameStatus.boss.param
         if parseInt(params[params.length - 1].recast) < parseInt(params[params.length - 1].recastmax)
           $this.trigger 'tap'
@@ -164,12 +197,13 @@ mainBattle = ->
     if $('.btn-command-summon.summon-on').length > 0
       $('.btn-command-summon').trigger 'tap'
       wait '.summon-show .lis-summon.on', (o) ->
-        $(o[0]).trigger 'tap'
+        if (supporter = o.filter( -> @getAttribute('summon-id') == 'supporter')).length > 0
+          supporter.trigger('tap')
+        else
+          o.first().trigger 'tap'
         wait '.btn-summon-use:visible', (use) ->
           use.trigger 'tap'
           next()
-          return
-        return
       done = true
       return
     hasPotion = parseInt(stage.gGameStatus.temporary.large) > 0
@@ -240,9 +274,3 @@ if location.href.match(/gbf.game.mbga.jp.*raid/)
     attachJs mainBattle
     return
   ), 2000
-
-# デマ対策
-if location.href.match('gbf.game.mbga.jp')
-  s = document.createElement('style')
-  s.innerText = '.prt-start-direction, #opaque-mask { display: none !important; }'
-  document.documentElement.appendChild s

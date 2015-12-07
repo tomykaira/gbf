@@ -36,12 +36,6 @@ basicAutoPlay = ->
         $('.btn-command-forward:visible:not(.disable)').trigger 'tap'
         return
       ), 1000
-    q = '[data-buton-name="イベントTOPへ"]:visible:not(.disable)'
-    if $(q).length > 0
-      setTimeout (->
-        $(q).trigger 'tap'
-        return
-      ), 1000
     q = '[data-location-href="quest"]:visible:not(.disable)'
     if location.href.match('result_multi/empty') and $(q).length > 0
       setTimeout (->
@@ -58,11 +52,30 @@ basicAutoPlay = ->
     if button.length > 0
       button.trigger 'tap'
     if $('.txt-popup-body').text().match('通信エラー') or
+        $('.txt-popup-body').text() == '既にバトルは終了しました。未確認バトルをご確認ください。' or
         $('.txt-popup-header').text().match('新アイテム入手') or
         $('.prt-pop-header').text() == '獲得経験値'
       tap '.btn-usual-ok'
 
+    if $('[class*=multi] .ico-receive-reward').length > 0
+      location.href = 'http://gbf.game.mbga.jp/#quest/assist/unclaimed'
+      setTimeout ->
+        tap('.btn-multi-battle')
+        wait '.btn-multi-raid', (e) ->
+          e.trigger('tap')
+          setTimeout ->
+            iv = setInterval ->
+              if location.href.match('result_multi')
+                tap('.btn-usual-ok')
+                tap('[data-buton-name="イベントTOPへ"]:visible:not(.disable)')
+              else
+                clearInterval(iv)
+            , 100
+          , 1000
+      , 1000
+
     tap '[data-buton-name="クエストリストへ"]'
+    tap '[data-buton-name="イベントTOPへ"]'
   ), 500)
 
   cooldown = (new Date).getTime()
@@ -92,3 +105,7 @@ if location.href.match(/gbf.game.mbga.jp/)
     attachJs basicAutoPlay
     return
   ), 1000
+
+  s = document.createElement('style')
+  s.innerText = 'html { zoom: 75% !important; cursor: default !important; }'
+  document.documentElement.appendChild s
