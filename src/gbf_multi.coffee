@@ -12,6 +12,7 @@ selectMultiBattle = ->
     'Lv30 闘虫禍草'
     'Lv40 ヨグ＝ソトース'
     'Lv50  幽世より至りし者'
+    'ネプチューン討伐戦'
   ]
   setTimeout (->
     try

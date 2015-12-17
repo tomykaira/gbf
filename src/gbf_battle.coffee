@@ -4,7 +4,7 @@ mainBattle = ->
   prevHpSum = -1
   hpRecorded = 0
   restartIv = setInterval((->
-    if isAuto and stage and stage.gGameStatus and stage.gGameStatus.boss and !stage.gGameStatus.boss.all_dead
+    if isAuto and stage?.gGameStatus?.boss and !stage.gGameStatus.boss.all_dead
       sum = 0
       stage.gGameStatus.boss.param.forEach (elm) ->
         sum += parseInt(elm.hp)
@@ -22,20 +22,32 @@ mainBattle = ->
         clearInterval restartIv
   ), 500)
   initIv = setInterval((->
-    autoStart = location.hash.indexOf('#raid_multi') == 0 or window.localStorage.restartAuto == 'true'
+    if !(stage?.gGameStatus?.boss)
+      return
+    autoStart = location.hash.indexOf('#raid_multi') == 0 or
+      localStorage.restartAuto == 'true' or
+      localStorage.autoSolo == 'true' and location.hash.includes('#raid/')
     window.localStorage.restartAuto = 'false'
-    askHelp = memberCount > 1
+    askHelp = false
     memberCount = undefined
     try
       memberCount = parseInt($('.prt-total-human .current.value[class*=num-info]').map(->
         @getAttribute('class').match(/\d/)[0]
       ).toArray().join(''))
-      if isNaN(memberCount) or memberCount == 0
-        return
+      askHelp = memberCount > 1 || localStorage.isStrongPlayer != 'true'
+      if location.hash.indexOf('#raid_multi') == 0 and (isNaN(memberCount) or memberCount == 0)
+        return # page is still loading
       param = stage.gGameStatus.boss.param[0]
       bossName = param.name
-      if 'Lv90 アグネア' == bossName and memberCount < 5 or 'Lv60 グガランナ' == bossName and memberCount < 2 or 'Lv75 エメラルドホーン' == bossName and memberCount < 2 or 'Lv60 ジャック・オー・ランタン' == bossName and memberCount < 2 or 'Lv75 パンプキンビースト' == bossName and memberCount < 2 or 'Lv60 マヒシャ' == bossName and memberCount < 2 or 'Lv75 スーペルヒガンテ' == bossName and memberCount < 2
-        log 'This enemy is strong. Wait other members.'
+      if 'Lv90 アグネア' == bossName and memberCount < 5 or
+          'Lv60 グガランナ' == bossName and memberCount < 2 or
+          'Lv75 エメラルドホーン' == bossName and memberCount < 2 or
+          'Lv60 ジャック・オー・ランタン' == bossName and memberCount < 2 or
+          'Lv75 パンプキンビースト' == bossName and memberCount < 2 or
+          'Lv60 マヒシャ' == bossName and memberCount < 2 or
+          'Lv75 スーペルヒガンテ' == bossName and memberCount < 2 or
+          (bossName.includes('ルヴェリエ') or bossName.includes('ネプチューン')) and memberCount < 3
+        log 'This enemy is strong. Wait other members.', bossName, memberCount
         askHelp = true
         setTimeout (-> location.reload()), 30 * 1000
         autoStart = false
@@ -77,7 +89,7 @@ mainBattle = ->
     if isAuto
       setAuto()
 
-  window.addEventListener 'unload', ->
+  window.addEventListener 'beforeunload', ->
     if isAuto
       window.localStorage.restartAuto = 'true'
 
@@ -91,7 +103,11 @@ mainBattle = ->
     if (elm = $('.btn-result:visible')).length > 0
       elm.trigger 'tap'
       return setTimeout(selectAction, 2000)
-    if (elm = $('.btn-usual-ok:visible,.btn-usual-close:visible')).length > 0 and elm.parents('.pop-result-use-potion').length == 0 and elm.parents('.pop-friend-request').length == 0 and elm.parents('.pop-raid-menu').length == 0 and $('.prt-pop-header').text() != '離脱確認'
+    if (elm = $('.btn-usual-ok:visible,.btn-usual-close:visible')).length > 0 and
+        elm.parents('.pop-result-use-potion').length == 0 and
+        elm.parents('.pop-friend-request').length == 0 and
+        elm.parents('.pop-raid-menu').length == 0 and
+        $('.prt-popup-header:visible').text() != '離脱確認'
       elm.trigger 'tap'
       return next()
     if $('.btn-attack-start.display-on').length == 0
@@ -110,8 +126,10 @@ mainBattle = ->
           done = true
           return false
       if done
-        next()
-        return
+        return next()
+      if $('.btn-lock.lock1').length == 0
+        $('.btn-lock').trigger 'tap'
+        return next()
       if $('.prt-battle-num .txt-info-num').children()[0].getAttribute('class') == 'num-info1' && stage.gGameStatus.turn == 1 && $('.btn-command-summon.summon-on').length > 0
         $('.btn-command-summon').trigger 'tap'
         wait '.summon-show .lis-summon.on', (o) ->
@@ -119,8 +137,6 @@ mainBattle = ->
           wait '.btn-summon-use:visible', (use) ->
             use.trigger 'tap'
             next()
-            return
-          return
         return
       $('.btn-attack-start').trigger 'tap'
       setTimeout next, 100
@@ -206,47 +222,50 @@ mainBattle = ->
           next()
       done = true
       return
-    hasPotion = parseInt(stage.gGameStatus.temporary.large) > 0
+    allDeadly = _.all([0..3], (i) -> hpRatio(i) > 0 and hpRatio(i) < 50)
+    pcDeadly = hpRatio(0) > 0 and hpRatio(0) < 25
+    hasPotion =
+    if parseInt(stage.gGameStatus.temporary.large) > 0 &&
+        (allDeadly || parseInt(stage.gGameStatus.temporary.small) == 0 && pcDeadly)
+      log 'using large potion'
+      $('.btn-temporary').trigger 'tap'
+      wait '.item-large img', (e) ->
+        e.trigger 'tap'
+        wait '.btn-usual-use', (e) ->
+          e.trigger 'tap'
+          setTimeout next, 2000 # つかいおわるまで待つ
+
+      return
+    else if parseInt(stage.gGameStatus.temporary.small) > 0 && pcDeadly
+      $('.btn-temporary').trigger 'tap'
+      wait '.item-small img', (e) ->
+        e.trigger 'tap'
+        wait '.lis-character0.btn-command-character', (e) ->
+          e.trigger 'tap'
+          setTimeout next, 2000 # つかいおわるまで待つ
+      return
     if hasPotion
-      deadly = true
-      i = 0
-      while i < 4
-        deadly = deadly and hpRatio(i) > 0 and hpRatio(i) < 50
-        i++
-      if hpRatio(0) > 0 and hpRatio(0) < 25 or deadly
-        log 'using potion'
-        $('.btn-temporary').trigger 'tap'
-        wait '.item-large img', (e) ->
-          if hasPotion
-            e.trigger 'tap'
-            wait '.btn-usual-use', (e) ->
-              e.trigger 'tap'
-              setTimeout next, 2000
-              # つかいおわるまで待つ
-              return
-          else
-            $('.btn-usual-cancel').trigger 'tap'
-            next()
-          return
-        return
-    canChain = true
+      if  or deadly
+    canChain = 0
+    cantChainGauge = 0
     less50 = 0
     $('.prt-percent:visible .txt-gauge-value').each (i) ->
       v = parseInt($(this).text())
-      canChain = canChain and v >= 100 - (i * 10)
+      if v >= 100 - (canChain * 10)
+        canChain += 1
+      else
+        cantChainGauge = v
       if v < 50
         less50 += 1
       return
-    if canChain or less50 >= 3
+    if canChain == 4 or canChain == 3 and cantChainGauge <= 60 or less50 >= 3
       if $('.btn-lock.lock0').length == 0
         $('.btn-lock').trigger 'tap'
-        next()
-        return
+        return next()
     else
       if $('.btn-lock.lock1').length == 0
         $('.btn-lock').trigger 'tap'
-        next()
-        return
+        return next()
     assist = $('.btn-assist:visible')
     if assist.length > 0 and !assist.hasClass('disable') and (!hasPotion or stage.gGameStatus.turn >= 10 or stage.gGameStatus.lose)
       $('.btn-assist:visible').trigger 'tap'
@@ -255,8 +274,6 @@ mainBattle = ->
         wait '.btn-usual-ok:visible', (e) ->
           e.trigger 'tap'
           next()
-          return
-        return
       return
     $('.btn-attack-start').trigger 'tap'
     setTimeout next, 100

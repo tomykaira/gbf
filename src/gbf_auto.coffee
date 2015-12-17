@@ -54,8 +54,10 @@ basicAutoPlay = ->
     if $('.txt-popup-body').text().match('通信エラー') or
         $('.txt-popup-body').text() == '既にバトルは終了しました。未確認バトルをご確認ください。' or
         $('.txt-popup-header').text().match('新アイテム入手') or
-        $('.prt-pop-header').text() == '獲得経験値'
+        $('.prt-popup-header:visible').text() == '獲得経験値'
       tap '.btn-usual-ok'
+    if $('.prt-popup-header:visible').text() == 'デイリーミッション'
+      tap '.btn-usual-close'
 
     if $('[class*=multi] .ico-receive-reward').length > 0
       location.href = 'http://gbf.game.mbga.jp/#quest/assist/unclaimed'
@@ -107,5 +109,8 @@ if location.href.match(/gbf.game.mbga.jp/)
   ), 1000
 
   s = document.createElement('style')
-  s.innerText = 'html { zoom: 75% !important; cursor: default !important; }'
+  s.innerText = """
+html { zoom: 75% !important; cursor: default !important; }
+#loading { bottom: auto !important; }
+"""
   document.documentElement.appendChild s

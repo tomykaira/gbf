@@ -81,5 +81,28 @@ loader = ->
         ), 20
     return
 
+  window.clickCanvas = ->
+    x = window.innerWidth / 2
+    y = window.innerHeight / 2
+    createTouchEvent = (type) ->
+      evt = document.createEvent('UIEvent')
+      evt.initUIEvent type, true, true
+      evt.view = window
+      evt.altKey = false
+      evt.ctrlKey = false
+      evt.shiftKey = false
+      evt.metaKey = false
+      evt.touches = [ {
+        x: x
+        y: y
+        pageX: x
+        pageY: y
+      } ]
+      evt
+
+    if canvas = document.querySelector('canvas')
+      canvas.dispatchEvent(createTouchEvent('touchstart'))
+      canvas.dispatchEvent(createTouchEvent('touchend'))
+
 
 attachJs(loader)

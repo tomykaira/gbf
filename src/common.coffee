@@ -82,6 +82,11 @@ f = ->
   document.ondragstart = ->
     false
 
+  if location.href.includes('http://sp.pf.mbga.jp/12007160')
+    window.ontouchstart			= (e) -> fireEvent(e, 'touchstart')
+    window.ontouchmove			= null;
+    window.ontouchend			= (e) -> fireEvent(e, 'touchend')
+
   window.innerWidth = 480
   delete console # enable console.log
 

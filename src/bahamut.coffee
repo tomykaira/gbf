@@ -2,34 +2,17 @@ bahaAttackHelp = ->
   window.tapEvent = 'click'
   window.eventType = 'ap1'
 
-  clickCanvas = ->
-    x = window.innerWidth / 2
-    y = window.innerHeight / 2
-    createTouchEvent = (type) ->
-      evt = document.createEvent('UIEvent')
-      evt.initUIEvent type, true, true
-      evt.view = window
-      evt.altKey = false
-      evt.ctrlKey = false
-      evt.shiftKey = false
-      evt.metaKey = false
-      evt.touches = [ {
-        x: x
-        y: y
-        pageX: x
-        pageY: y
-      } ]
-      evt
-
-    if canvas = document.querySelector('canvas')
-      canvas.dispatchEvent(createTouchEvent('touchstart'))
-      canvas.dispatchEvent(createTouchEvent('touchend'))
-
+  # usual quest
   setTimeout ->
     if location.href.includes('%2Fquest_boss%2F') || location.href.includes('%2Fquest%2F')
       tap('#shortcut_link_show')
   , 300
+  setInterval ->
+    if location.href.includes('%2Fbahamut%2Fsmart_phone_flash%2Fquest_boss%2F')
+      clickCanvas()
+  , 1000
 
+  # event
   switch window.eventType
     when 'ap0'
       setInterval ->
@@ -65,7 +48,7 @@ bahaAttackHelp = ->
 
         # boss
         tap('input[value="ボスと戦う"]')
-        if location.href.indexOf 'bahamut%2Fsmart_phone_flash%2Fconvert%2FeventsSsSsevent' != -1
+        if location.href.includes('bahamut%2Fsmart_phone_flash%2Fconvert%2FeventsSsSsevent')
           clickCanvas()
 
         # beat monster

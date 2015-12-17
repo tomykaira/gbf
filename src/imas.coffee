@@ -2,10 +2,27 @@ imasAuto = ->
   window.tapEvent = 'raw'
 
   delete console
+  localStorage.EventWorkType = '2'
+  localStorage.WorkType = '2'
   iid = setInterval ->
-    if location.href.includes('quests%2Fwork')
+    if location.href.includes('quests%2Fwork') && $('#title_val').length == 0
       Imascg.QuestModel.play()
-  , 500
+  , 1000
+
+  if location.href.includes('%2Fprofile%2Fshow%2') && document.referrer == 'http://dojo.sekai.in/'
+    wait '.m-Btm10.t-Cnt table:nth(0) tr:nth(0) td:nth(1) a', (e) ->
+      location.href = e.prop('href')
+  if location.href.includes('%2Fbattles%2Fbattle_check')
+    wait('input[value="LIVEバトル開始"]:first', (x) -> x.click())
+  if location.href.includes('idolmaster%2Fbonus_point')
+    $('#add_hp option').prop('selected', false)
+    $('#add_hp option:last-child').prop('selected', true)
+    # $('.submit_btn').click()
+    wait '.popup_check_area', ->
+      $('input[value="追加"]').click()
+  if location.href.includes('%2Fidolmaster%2Fbonus_point%2Fadd_check')
+    $('#confirm').prop('checked', true)
+    $('input[type=submit]').click()
 
 if location.href.includes('sp.pf.mbga.jp/12008305')
   setTimeout (->
