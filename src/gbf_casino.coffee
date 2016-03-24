@@ -1,12 +1,10 @@
 casino = ->
   humanTap = (button, nextAction) ->
-    nextInvert = _.invert(nextButton)
     setTimeout (->
       button.trigger 'tap'
       wait nextInvert[nextAction], nextAction
       return
     ), 500
-    return
 
   getCurrentBet = ->
     str = ''
@@ -16,12 +14,19 @@ casino = ->
     parseInt str
 
   start = (button) ->
-    log 'Auto play ' + Game.view.medal
+    log('now on start ',
+      localStorage.autoMulti == 'true',
+      localStorage.lastCheckedAt?,
+      parseInt(localStorage.lastCheckedAt),
+      parseInt(localStorage.lastCheckedAt) < new Date().getTime() - 60 * 1000)
+    if localStorage.autoMulti == 'true' and
+        localStorage.lastCheckedAt? and parseInt(localStorage.lastCheckedAt) < new Date().getTime() - 60 * 1000
+      location.href = 'http://gbf.game.mbga.jp/#quest/assist'
+      return
     setTimeout (->
       humanTap button, selectHolds
       return
     ), 500
-    return
 
   selectHolds = (okButton) ->
     # 1-indexed
@@ -92,11 +97,13 @@ casino = ->
       humanTap buttons.filter('[select="high"]'), doubleUpOrNext
     return
 
+  # define after functions
   nextButton =
     '.prt-start:visible': start
     '.prt-ok:visible': selectHolds
     '.prt-yes:visible,.prt-start:visible': doubleUpOrNext
     '.prt-double-select:visible': doubleUpSelect
+  nextInvert = _.invert(nextButton)
 
   setTimeout ->
     done = false
@@ -105,6 +112,8 @@ casino = ->
       if !done and elm.length > 0
         fn elm
         done = true
+        return false
+      return true
   , 2000
 
 if location.href.match(/gbf.game.mbga.jp.*casino\/game\/poker\//)

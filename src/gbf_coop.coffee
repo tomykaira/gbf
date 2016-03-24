@@ -15,7 +15,7 @@ f = ->
       tap '.pop-usual.pop-notice.pop-show .btn-usual-ok'
 
     if tap '.btn-make-ready-large.not-ready'
-      wait '.icon-supporter-type-5', (e) ->
+      wait (if localStorage.isStrongPlayer == 'true' then '.icon-supporter-type-0' else '.icon-supporter-type-0'), (e) ->
         e.trigger 'tap'
         wait '.prt-supporter-attribute:not(.disableView) .btn-supporter:first-child', (e) ->
           e.trigger 'tap'
@@ -35,7 +35,7 @@ f = ->
       tap '.btn-usual-close'
 
     if location.href.match(/gbf.game.mbga.jp.*#coopraid\/offer/)
-      ngWords = ['パンデ', 'サジ', '匙', 'さじ', 'コロゥ', 'ダークマター', '順', 'EX', 'ex', 'E1', 'E2', 'E3', 'E4', 'E5']
+      ngWords = ['パンデ', 'サジ', '匙', 'さじ', 'コロゥ', 'ダークマター', '順', 'EX', 'ex', 'E1', 'E2', 'E3', 'E4', 'E5', '信念']
       iid = setInterval ->
         if $('#loading:visible').length == 0
           clearInterval(iid)
@@ -43,6 +43,7 @@ f = ->
           if room = _.find(Game.view.wanted_list_model.attributes.list, (r) ->
               r.can_join &&
                 r.member.length < 3 &&
+                (localStorage.isStrongPlayer == 'true' or parseInt(r.rank) <= 60) &&
                 ['1', '6', '5'].indexOf(r.invite_type) != -1 &&
                 !_.some ngWords, (ng) -> r.short_comment.includes(ng)
               )
@@ -66,6 +67,7 @@ f = ->
       if count <= 2 && maxCount > 2
         tap('.btn-leave-room')
         clearInterval(iid)
+    , 1000
 
 
 if location.href.match(/gbf.game.mbga.jp/)

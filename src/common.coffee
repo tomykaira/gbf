@@ -88,12 +88,20 @@ f = ->
     window.ontouchend			= (e) -> fireEvent(e, 'touchend')
 
   window.innerWidth = 480
-  delete console # enable console.log
+
+  setTimeout ->
+    iframe = document.createElement('iframe')
+    iframe.style.position = 'fixed'
+    iframe.style.height = iframe.style.width = '1px'
+    iframe.style.top = iframe.style.left = '-5px'
+    iframe.src = 'about: blank'
+    document.body.appendChild(iframe)
+  , 100
 
   if window.Game?.reportError?
     window.Game.reportError = ->
 
 if location.href.match('sp.pf.mbga.jp')
   attachJs f
-  if !location.href.match('convert_game_center.*hanafuda')
+  if !location.href.match('convert_game_center')
     document.getElementsByTagName('html')[0].style.zoom = '80%'

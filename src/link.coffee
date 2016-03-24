@@ -12,12 +12,12 @@ commands =
     html.attr('style', html.attr('style').replace(';', ' !important;'))
 
 root = document.createElement('div')
+root.setAttribute('id', 'my-panel')
+root.style.fontSize = '18px'
 for label, addr of links
   link = document.createElement('a')
   link.setAttribute('href', addr)
   link.innerHTML = label
-  link.style.color = 'white'
-  link.style.backgroundColor = 'black'
   root.appendChild(link)
   root.appendChild(document.createElement('br'))
 for label, script of commands
@@ -25,8 +25,6 @@ for label, script of commands
   link.addEventListener 'click', ->
     attachJs script
   link.innerHTML = label
-  link.style.color = 'white'
-  link.style.backgroundColor = 'black'
   root.appendChild(link)
   root.appendChild(document.createElement('br'))
 

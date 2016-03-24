@@ -1,4 +1,4 @@
-var userAgent	= "Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A403 Safari/8536.25";
+var userAgent	= 'Mozilla/5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11A465 Safari/9537.53';
 var version		= "1.8";
 var manifest	= chrome.runtime.getManifest();
 /* *******************************************************************

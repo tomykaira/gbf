@@ -46,18 +46,20 @@ mainBattle = ->
           'Lv75 パンプキンビースト' == bossName and memberCount < 2 or
           'Lv60 マヒシャ' == bossName and memberCount < 2 or
           'Lv75 スーペルヒガンテ' == bossName and memberCount < 2 or
-          (bossName.includes('ルヴェリエ') or bossName.includes('ネプチューン')) and memberCount < 3
+          (bossName.includes('ルヴェリエ') or bossName.includes('ネプチューン')) and memberCount < 3 or
+          ("Lv60 ヘイルクロプス" == bossName || bossName == "Lv75 イルルヤンカシュ") and memberCount < 2
         log 'This enemy is strong. Wait other members.', bossName, memberCount
         askHelp = true
         setTimeout (-> location.reload()), 30 * 1000
         autoStart = false
-      if bossName == 'Lv50  幽世より至りし者'
+      if bossName == 'Lv50  幽世より至りし者' or
+          bossName == 'Lv50  ア' or
+          bossName == 'Lv60 青竜'
         askHelp = true
     catch e
       log e
       return
     log 'autostart ' + autoStart
-    window.localStorage.autoMulti = 'false'
     if askHelp
       $('.pop-start-assist .btn-usual-text').trigger 'tap'
       # 救援依頼。あれば
@@ -89,9 +91,9 @@ mainBattle = ->
     if isAuto
       setAuto()
 
-  window.addEventListener 'beforeunload', ->
-    if isAuto
-      window.localStorage.restartAuto = 'true'
+  # window.addEventListener 'beforeunload', ->
+  #   if isAuto
+  #     window.localStorage.restartAuto = 'true'
 
   hpRatio = (characterNum) ->
     parseInt $('.lis-character' + characterNum + ' .prt-gauge-hp-inner')[0].style.width
@@ -117,11 +119,11 @@ mainBattle = ->
     done = false
     # 複数回バトルの最後以外は攻撃のみ
     battleNums = $('.prt-battle-num .txt-info-num').children()
-    if battleNums.length > 0 and battleNums[0].className != battleNums[battleNums.length - 1].className
+    if localStorage.isStrongPlayer == 'true' and battleNums.length > 0 and battleNums[0].className != battleNums[battleNums.length - 1].className
       $('[ability-recast=0]').each ->
         $this = $(this)
         name = $this.attr('ability-name')
-        if name == 'フォーカス'
+        if ['フォーカス', '錬成:キュアポーション'].includes(name)
           $this.trigger 'tap'
           done = true
           return false
@@ -160,6 +162,9 @@ mainBattle = ->
       if [
           '丹田喝'
           '丹田喝＋'
+          '肉弾剛力'
+          '肉弾俊敏'
+          '肉弾顎撃'
         ].indexOf(name) >= 0
         if specialPercent >= 10
           $this.trigger 'tap'
@@ -183,6 +188,8 @@ mainBattle = ->
       else if [
           '婆娑羅'
           'レーション＋'
+          '忍術'
+          'アーリーショット'
         ].indexOf(name) >= 0
         # 対象選択が面倒なのでつかわない
       else if type.indexOf('heal') >= 0 or [].indexOf(name) >= 0
@@ -224,7 +231,6 @@ mainBattle = ->
       return
     allDeadly = _.all([0..3], (i) -> hpRatio(i) > 0 and hpRatio(i) < 50)
     pcDeadly = hpRatio(0) > 0 and hpRatio(0) < 25
-    hasPotion =
     if parseInt(stage.gGameStatus.temporary.large) > 0 &&
         (allDeadly || parseInt(stage.gGameStatus.temporary.small) == 0 && pcDeadly)
       log 'using large potion'
@@ -244,13 +250,12 @@ mainBattle = ->
           e.trigger 'tap'
           setTimeout next, 2000 # つかいおわるまで待つ
       return
-    if hasPotion
-      if  or deadly
     canChain = 0
     cantChainGauge = 0
     less50 = 0
     $('.prt-percent:visible .txt-gauge-value').each (i) ->
       v = parseInt($(this).text())
+      log('val: ', v)
       if v >= 100 - (canChain * 10)
         canChain += 1
       else
@@ -258,6 +263,7 @@ mainBattle = ->
       if v < 50
         less50 += 1
       return
+    log('chain status', canChain, cantChainGauge, less50)
     if canChain == 4 or canChain == 3 and cantChainGauge <= 60 or less50 >= 3
       if $('.btn-lock.lock0').length == 0
         $('.btn-lock').trigger 'tap'
@@ -267,7 +273,7 @@ mainBattle = ->
         $('.btn-lock').trigger 'tap'
         return next()
     assist = $('.btn-assist:visible')
-    if assist.length > 0 and !assist.hasClass('disable') and (!hasPotion or stage.gGameStatus.turn >= 10 or stage.gGameStatus.lose)
+    if stage.pJsnData.assist?[1]?.is_enable && assist.length > 0 and !assist.hasClass('disable') and (!hasPotion or stage.gGameStatus.turn >= 10 or stage.gGameStatus.lose)
       $('.btn-assist:visible').trigger 'tap'
       wait '.pop-start-assist .btn-usual-text', (e) ->
         e.trigger 'tap'
@@ -286,8 +292,31 @@ mainBattle = ->
   autoButton.on 'change', toggleAuto
   $('body').append autoButton
 
+showStatus = ->
+  keys = ['autoSolo', 'isStrongPlayer', 'autoMulti', 'restartAuto', 'autoCoop']
+  panel = $('#my-panel')
+  _.each keys, (key) ->
+    dom = $('<div><label class="local-storage-status"><input type="checkbox" />' + key + '</label></div>')
+    dom.find('input[type=checkbox]').on 'change', (e) ->
+      $target = $(e.currentTarget)
+      active = $target.prop('checked')
+      localStorage[key] = if active then 'true' else 'false'
+      if active
+        $target.parent().addClass('active')
+      else
+        $target.parent().removeClass('active')
+    .prop('checked', localStorage[key] == 'true').trigger('change')
+    panel.append(dom)
+
+
 if location.href.match(/gbf.game.mbga.jp.*raid/)
   setTimeout (->
     attachJs mainBattle
     return
   ), 2000
+
+if location.href.includes('gbf.game.mbga.jp')
+  setTimeout (->
+    attachJs showStatus
+    return
+  ), 1000

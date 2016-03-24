@@ -1,6 +1,6 @@
 basicAutoPlay = ->
   setInterval((->
-    select = $('.prt-deck-select:visible')
+    select = $('.prt-deck-slider:visible')
     toMyId =
       1: 0
       2: 1
@@ -28,7 +28,7 @@ basicAutoPlay = ->
     return
   ), 100)
 
-  setInterval((->
+  iid3 = setInterval((->
     button = $('.btn-command-forward:visible:not(.disable)')
     q = undefined
     if button.length > 0
@@ -36,6 +36,11 @@ basicAutoPlay = ->
         $('.btn-command-forward:visible:not(.disable)').trigger 'tap'
         return
       ), 1000
+    if location.href.includes('result_multi/') and localStorage.autoMulti == 'true'
+      location.href = 'http://gbf.game.mbga.jp/#quest/assist/event'
+      clearInterval iid3
+      location.reload()
+      return
     q = '[data-location-href="quest"]:visible:not(.disable)'
     if location.href.match('result_multi/empty') and $(q).length > 0
       setTimeout (->
@@ -59,7 +64,7 @@ basicAutoPlay = ->
     if $('.prt-popup-header:visible').text() == 'デイリーミッション'
       tap '.btn-usual-close'
 
-    if $('[class*=multi] .ico-receive-reward').length > 0
+    if $('[class*=multi] .ico-receive-reward').length > 0 or $('.prt-btn-unclaimed .ico-receive-reward:visible').length > 0
       location.href = 'http://gbf.game.mbga.jp/#quest/assist/unclaimed'
       setTimeout ->
         tap('.btn-multi-battle')

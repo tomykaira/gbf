@@ -1,8 +1,4 @@
 selectMultiBattle = ->
-  if window.localStorage.autoMulti != 'true'
-    return
-  isAuto = false
-  hasPotion = true
   interestedEnemies = [
     'アグニス討伐戦'
     'Lv40 ゲイザー'
@@ -13,9 +9,21 @@ selectMultiBattle = ->
     'Lv40 ヨグ＝ソトース'
     'Lv50  幽世より至りし者'
     'ネプチューン討伐戦'
+    'Lv40 スノウマン'
+    'ブッチャギー討伐戦'
+    ''
   ]
-  setTimeout (->
+  iid = setInterval ->
+    unless location.href.includes('quest/assist') and $('.prt-raid-info').length != 0
+      return
+    if location.href.includes('quest/assist/unclaimed')
+      return
+    if window.localStorage.autoMulti != 'true'
+      return
     try
+      if $('.prt-btn-unclaimed .ico-receive-reward:visible').length > 0
+        return
+
       myBP = parseInt($('.prt-user-bp-value').prop('title'))
       if isNaN(myBP)
         log 'my BP is NaN'
@@ -31,13 +39,23 @@ selectMultiBattle = ->
           return false
         return
       if !selected
-        return location.reload()
+        clearInterval(iid)
+        if myBP < 5
+          location.href = 'http://gbf.game.mbga.jp/#casino/game/poker/200030'
+          localStorage.lastCheckedAt = new Date().getTime()
+          setTimeout ->
+            location.reload()
+          , 1000
+          return
+        setTimeout ->
+          location.reload()
+        , 5000
     catch e
       log 'Exception', e
     return
-  ), 5000   # wait until page is fully rendered
+  , 100
 
-if location.href.match(/gbf.game.mbga.jp.*#quest\/assist/)
+if location.href.includes('gbf.game.mbga.jp')
   setTimeout (->
     attachJs selectMultiBattle
     return

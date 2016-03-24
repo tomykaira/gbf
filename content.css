@@ -1,3 +1,16 @@
 [class^="lis-character"] .txt-hp-value.hide-hp:after {
     display: none !important;
 }
+
+#my-panel {
+    color: black;
+    background-color: white;
+}
+
+#my-panel a {
+    color: black;
+}
+
+.local-storage-status.active {
+    color: #F57F17;
+}

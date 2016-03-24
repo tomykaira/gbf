@@ -16,6 +16,12 @@ loader = ->
     if typeof selector == 'function'
       elm = selector()
       found = elm
+    else if selector instanceof jQuery
+      elm = selector
+      found = true
+    else if selector instanceof HTMLElement
+      elm = $(selector)
+      found = true
     else
       elm = $(selector + ':visible:not(.disable)')
       found = elm.length > 0
@@ -81,9 +87,15 @@ loader = ->
         ), 20
     return
 
-  window.clickCanvas = ->
-    x = window.innerWidth / 2
-    y = window.innerHeight / 2
+  window.clickCanvas = (x, y) ->
+    if x?
+      x = x/2
+    else
+      x = window.innerWidth / 2
+    if y?
+      y = y/2
+    else
+      y = window.innerHeight / 2
     createTouchEvent = (type) ->
       evt = document.createEvent('UIEvent')
       evt.initUIEvent type, true, true
@@ -104,5 +116,18 @@ loader = ->
       canvas.dispatchEvent(createTouchEvent('touchstart'))
       canvas.dispatchEvent(createTouchEvent('touchend'))
 
+  window.addLocalStorageConfig = (key) ->
+    panel = $('#my-panel')
+    dom = $('<div><label class="local-storage-status"><input type="checkbox" />' + key + '</label></div>')
+    dom.find('input[type=checkbox]').on 'change', (e) ->
+      $target = $(e.currentTarget)
+      active = $target.prop('checked')
+      localStorage[key] = if active then 'true' else 'false'
+      if active
+        $target.parent().addClass('active')
+      else
+        $target.parent().removeClass('active')
+    .prop('checked', localStorage[key] == 'true').trigger('change')
+    panel.append(dom)
 
 attachJs(loader)

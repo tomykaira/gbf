@@ -1,28 +1,24 @@
 f = ->
   tapImpl = (selector, cont, allowNotFound) ->
-    waitCount = if allowNotFound then 100 else 1000
-    evt = document.createEvent('UIEvent')
+    waitCount = if allowNotFound then 100 else 300
 
     find = ->
       waitCount -= 1
-      elem = document.querySelector(selector)
-      if elem != null
-        elem.dispatchEvent evt
-        setTimeout cont, 1000
+      elem = $(selector + ':visible')
+      log(elem)
+      if elem.length > 0
+        elem.trigger('tap')
+        cont()
       else if waitCount <= 0
         log 'Could not find selector ' + selector
         if allowNotFound
-          setTimeout cont, 1000
+          cont()
       else
         setTimeout find, 10
-      return
 
-    evt.initUIEvent 'tap', true, true
-    evt.window = window
     find()
-    return
 
-  tap = (selector, cont) ->
+  tapM = (selector, cont) ->
     tapImpl selector, cont, false
     return
 
@@ -31,37 +27,50 @@ f = ->
     return
 
   window.casinoSlot = ->
-    tap '.prt-bet-one', ->
-      tap '.prt-start', ->
+    tapM '.prt-bet-one', ->
+      tapM '.prt-start', ->
         setTimeout casinoSlot, 5000 * (1 + Math.random())
 
-  window.enhanceWeapon = (id) ->
-    tap '.btn-head-pop', ->
-      tap '.txt-global-present', ->
-        tap '.btn-tabs.termed', ->
-          tap '#prt-present-limit .btn-get-all', ->
-            tap '.prt-popup-footer .btn-usual-ok', ->
-              tap '.prt-relation-button[data-key="1"]', ->
-                tap '.btn-enhancement-weapon', ->
-                  tap '.btn-weapon[data-weapon-id="' + id + '"]', ->
-                    tap '.btn-recommend', ->
-                      tap '.btn-synthesis', ->
-                        tapOptional '.prt-popup-footer .btn-usual-ok', ->
-                          enhanceWeapon id
+  window.Enhancer = (name, dataKey) ->
+    receive = (id, cb) ->
+      tapM '.btn-head-pop', ->
+        tapM '.txt-global-present', ->
+          tapM '.btn-tabs.termed', ->
+            tapM '#prt-present-limit .btn-get-all', ->
+              tapM '.prt-popup-footer .btn-usual-ok', ->
+                tapM '.prt-relation-button[data-key="' + dataKey + '"]', ->
+                  tapM ".btn-enhancement-#{name}", ->
+                    tapM '.btn-' + name + '[data-' + name + '-id="' + id + '"]', cb
+    applyRecommend = (cb) ->
+      tapM '.btn-recommend', ->
+        tapM '.btn-synthesis', ->
+          tapOptional '.prt-popup-footer .btn-usual-ok', ->
+            setTimeout cb, 1000
+    enhance = (id, startFromEnhance) ->
+      log(arguments)
+      if startFromEnhance
+        applyRecommend ->
+          enhance id, false
+      else
+        receive id, ->
+          enhance id, true
+    @enhance = enhance
+    @
 
-  window.enhanceSummon = (id) ->
-    tap '.btn-head-pop', ->
-      tap '.txt-global-present', ->
-        tap '.btn-tabs.termed', ->
-          tap '#prt-present-limit .btn-get-all', ->
-            tap '.prt-popup-footer .btn-usual-ok', ->
-              tap '.prt-relation-button[data-key="2"]', ->
-                tap '.btn-enhancement-summon', ->
-                  tap '.btn-summon[data-summon-id="' + id + '"]', ->
-                    tap '.btn-recommend', ->
-                      tap '.btn-synthesis', ->
-                        tapOptional '.prt-popup-footer .btn-usual-ok', ->
-                          enhanceSummon id
+  weaponEnhancer = new Enhancer('weapon', '1')
+  summonEnhancer = new Enhancer('summon', '2')
+
+  button = $('<a>強化する</a>').on 'click', ->
+    isFull = $('.prt-list-count').text().includes('50 / 50')
+    if location.href.includes('enhancement/weapon/base')
+      alert('強化する武器を選んでください')
+      $('.btn-weapon.lis-weapon').on 'click', (e) ->
+        weaponEnhancer.enhance($(this).data('weapon-id'), isFull)
+    if location.href.includes('enhancement/summon/base')
+      alert('強化する石を選んでください')
+      $('.btn-summon.lis-summon').on 'click', (e) ->
+        summonEnhancer.enhance($(this).data('summon-id'), isFull)
+  $('#my-panel').append(button)
 
 if location.href.match(/gbf.game.mbga.jp/)
   setTimeout (->
