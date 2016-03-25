@@ -103,5 +103,5 @@ f = ->
 
 if location.href.match('sp.pf.mbga.jp')
   attachJs f
-  if !location.href.match('convert_game_center')
-    document.getElementsByTagName('html')[0].style.zoom = '80%'
+  # if !location.href.match('convert_game_center')
+  #   document.getElementsByTagName('html')[0].style.zoom = '80%'
