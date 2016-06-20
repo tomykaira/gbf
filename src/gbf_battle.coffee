@@ -38,8 +38,8 @@ mainBattle = ->
       if location.hash.indexOf('#raid_multi') == 0 and (isNaN(memberCount) or memberCount == 0)
         return # page is still loading
       param = stage.gGameStatus.boss.param[0]
-      bossName = param.name
-      if 'Lv90 アグネア' == bossName and memberCount < 5 or
+      bossName = param.name.ja
+      if 'Lv90 アグネア' == bossName and memberCount < 3 or
           'Lv60 グガランナ' == bossName and memberCount < 2 or
           'Lv75 エメラルドホーン' == bossName and memberCount < 2 or
           'Lv60 ジャック・オー・ランタン' == bossName and memberCount < 2 or
@@ -47,14 +47,15 @@ mainBattle = ->
           'Lv60 マヒシャ' == bossName and memberCount < 2 or
           'Lv75 スーペルヒガンテ' == bossName and memberCount < 2 or
           (bossName.includes('ルヴェリエ') or bossName.includes('ネプチューン')) and memberCount < 3 or
-          ("Lv60 ヘイルクロプス" == bossName || bossName == "Lv75 イルルヤンカシュ") and memberCount < 2
+          ("Lv60 ヘイルクロプス" == bossName || bossName == "Lv75 イルルヤンカシュ") and memberCount < 2 or
+          ("Lv50 ベオウルフ" == bossName || bossName == "Lv75 ヴァルカンライオ") and memberCount < 2 or
+          ("Lv50 ベオウルフ" == bossName || bossName == "Lv75 ティラノス") and memberCount < 2
         log 'This enemy is strong. Wait other members.', bossName, memberCount
         askHelp = true
         setTimeout (-> location.reload()), 30 * 1000
         autoStart = false
-      if bossName == 'Lv50  幽世より至りし者' or
-          bossName == 'Lv50  ア' or
-          bossName == 'Lv60 青竜'
+      if (m = bossName.match(/Lv(\d+)/)) && parseInt(m[1]) >= 50 &&
+          (bossName.includes('マグナ') || !(bossName.includes('ティアマト') || bossName.includes('リヴァイアサン') || bossName.includes('コロッサス') || bossName.includes('ユグドラシル') || bossName.includes('アドウェルサ') || bossName.includes('セレスト')))
         askHelp = true
     catch e
       log e
@@ -79,8 +80,6 @@ mainBattle = ->
     tap('.pop-cheer .btn-cheer')
 
   ), 500)
-
-  autoButton = window.$('<input type="checkbox" style="position: fixed; top: 10px; left: 10px; width: 50px; height: 50px; z-index: 9999;" />')
 
   setAuto = ->
     isAuto = true
@@ -109,7 +108,8 @@ mainBattle = ->
         elm.parents('.pop-result-use-potion').length == 0 and
         elm.parents('.pop-friend-request').length == 0 and
         elm.parents('.pop-raid-menu').length == 0 and
-        $('.prt-popup-header:visible').text() != '離脱確認'
+        $('.prt-popup-header:visible').text() != '離脱確認' and
+        $('.prt-popup-header:visible').text() != '撤退確認'
       elm.trigger 'tap'
       return next()
     if $('.btn-attack-start.display-on').length == 0
@@ -157,14 +157,18 @@ mainBattle = ->
         `var params`
         $(this).attr 'data-status'
       ))
-      if statuses.indexOf('1263') >= 0 or statuses.indexOf('1102') >= 0 or statuses.indexOf('1111') >= 0 or statuses.indexOf('1111_1') >= 0
+      if statuses.indexOf('1263') >= 0 or
+          statuses.indexOf('1102') >= 0 or
+          statuses.indexOf('1111') >= 0 or
+          statuses.indexOf('1111_1') >= 0 or
+          statuses.indexOf('1241') >= 0
         return true
       if [
           '丹田喝'
           '丹田喝＋'
           '肉弾剛力'
           '肉弾俊敏'
-          '肉弾顎撃'
+          '肉弾顎撃',
         ].indexOf(name) >= 0
         if specialPercent >= 10
           $this.trigger 'tap'
@@ -190,9 +194,18 @@ mainBattle = ->
           'レーション＋'
           '忍術'
           'アーリーショット'
+          '宿命陣'
+          '瞑想'
+          '剣神共鳴'
+          '集気'
+          'アサシネーション'
+          'ダブルアサシン'
+          'バニッシュ'
+          '壱之舞・神楽'
+          '壱之舞・神楽＋'
         ].indexOf(name) >= 0
         # 対象選択が面倒なのでつかわない
-      else if type.indexOf('heal') >= 0 or [].indexOf(name) >= 0
+      else if type.indexOf('heal') >= 0 or ['メディク'].indexOf(name) >= 0
         if hpPercent < 75
           $this.trigger 'tap'
           done = true
@@ -289,8 +302,13 @@ mainBattle = ->
     setTimeout selectAction, 10
     return
 
+  autoButton = window.$('<input id="auto-button" type="checkbox" style="position: fixed; top: 10px; left: 10px; width: 50px; height: 50px; z-index: 9999;" />')
   autoButton.on 'change', toggleAuto
-  $('body').append autoButton
+  setInterval((->
+    unless document.querySelector('#auto-button')
+      $('body').append autoButton
+  ), 1000)
+
 
 showStatus = ->
   keys = ['autoSolo', 'isStrongPlayer', 'autoMulti', 'restartAuto', 'autoCoop']

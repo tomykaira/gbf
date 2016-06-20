@@ -44,18 +44,19 @@ f = ->
           localStorage.returningFromFlash = 'false'
           location.reload()
           return
-        bossName = $(e).text()
-        if bossName.includes?('Rank:A') or
-            bossName.includes?('Rank:SP') or
-            bossName.includes?('(HARD)') or
-            bossName.includes?('(VERY HARD)')
-          attackRival()
-        else
-          tap('.home')
+        attackRival()
+        # bossName = $(e).text()
+        # # if bossName.includes?('Rank:A') or
+        # #     bossName.includes?('Rank:SP') or
+        # #     bossName.includes?('(HARD)') or
+        # #     bossName.includes?('(VERY HARD)')
+        # else
+        #   tap('.home')
       ]
       ['%2Fevent_carnival%2Fraid_win%', '#top > p > a', (e) -> tap(e)]
       ['%2Fevent_carnival%2Fraid_win%', '#top > div.t-Cnt > p > a', (e) -> tap(e)]
-      ['', '#top > div.displayBox > div:nth-child(2) > p > a', (e) -> tap(e)]
+      ['%2Fevent_carnival%2Fraid_lose%', '.home', (e) -> tap(e)]
+      ['', '#top > div.displayBox > div:nth-child(1) > p > a', (e) -> tap(e)]
     ]
 
     setTimeout ->

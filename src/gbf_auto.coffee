@@ -16,6 +16,19 @@ basicAutoPlay = ->
     return
   ), 100)
 
+  setInterval((->
+    name = ''
+    title = $('.prt-popup-header:visible').text()
+    thisName = $('.prt-popup-body .item-name').text()
+    if location.href.includes('#casino/exchange') && title == '交換確認' && name != thisName
+      name = thisName
+      last = $('.num-set').find('option').last()
+      Game.view.exchangeNumber = last.val()
+      last.attr('selected', 'selected')
+    if location.href.includes('#casino/exchange') && title == '交換完了'
+      $('.btn-usual-ok').trigger('tap')
+  ), 500)
+
   iid2 = setInterval((->
     go = $('.btn-supporter:visible')
     if localStorage.autoMulti == 'true' and go.length > 0
@@ -102,7 +115,7 @@ basicAutoPlay = ->
 
   setInterval (->
     if location.href.match(/gbf.game.mbga.jp.*#event\/(treasureraid|teamraid)\d\d\d\/gacha\/result/) and $('.btn-reset').length == 0
-      $('.txt-available-times10').trigger 'tap'
+      $('.txt-available-times').trigger 'tap'
     return
   ), 500
 

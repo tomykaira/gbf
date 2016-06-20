@@ -1,4 +1,6 @@
 casino = ->
+  loadedAt = new Date().getTime()
+
   humanTap = (button, nextAction) ->
     setTimeout (->
       button.trigger 'tap'
@@ -14,6 +16,9 @@ casino = ->
     parseInt str
 
   start = (button) ->
+    if ((new Date().getTime() - loadedAt) > 30 * 60 * 1000)
+      alert('Auto stop');
+      return
     log('now on start ',
       localStorage.autoMulti == 'true',
       localStorage.lastCheckedAt?,

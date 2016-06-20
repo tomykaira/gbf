@@ -7,6 +7,9 @@ links =
   'モバマス': 'http://sp.pf.mbga.jp/12008305/?guid=ON&url=http%3A%2F%2F125.6.169.35%2Fidolmaster%2Fmypage%3Fl_frm%3DTop_2'
 
 commands =
+  '隠す': ->
+    target = document.querySelector('#my-panel')
+    target.style.display = 'none'
   '地図': ->
     html = $('html')
     html.attr('style', html.attr('style').replace(';', ' !important;'))
@@ -22,8 +25,7 @@ for label, addr of links
   root.appendChild(document.createElement('br'))
 for label, script of commands
   link = document.createElement('a')
-  link.addEventListener 'click', ->
-    attachJs script
+  link.addEventListener 'click', attachJs.bind(null, script)
   link.innerHTML = label
   root.appendChild(link)
   root.appendChild(document.createElement('br'))
