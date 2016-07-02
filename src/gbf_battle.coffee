@@ -24,7 +24,8 @@ mainBattle = ->
   initIv = setInterval((->
     if !(stage?.gGameStatus?.boss)
       return
-    autoStart = location.hash.indexOf('#raid_multi') == 0 or
+    console.log(localStorage.autoMulti, localStorage.autoCoop)
+    autoStart = location.hash.indexOf('#raid_multi') == 0 and (localStorage.autoMulti == 'true' or localStorage.autoCoop == 'true') or
       localStorage.restartAuto == 'true' or
       localStorage.autoSolo == 'true' and location.hash.includes('#raid/')
     window.localStorage.restartAuto = 'false'
@@ -52,9 +53,11 @@ mainBattle = ->
           ("Lv50 ベオウルフ" == bossName || bossName == "Lv75 ティラノス") and memberCount < 2
         log 'This enemy is strong. Wait other members.', bossName, memberCount
         askHelp = true
-        setTimeout (-> location.reload()), 30 * 1000
+        setTimeout (->
+          unless isAuto
+            location.reload()), 30 * 1000
         autoStart = false
-      if (m = bossName.match(/Lv(\d+)/)) && parseInt(m[1]) >= 50 &&
+      if (m = bossName.match(/Lv(\d+)/)) && parseInt(m[1]) > 60 &&
           (bossName.includes('マグナ') || !(bossName.includes('ティアマト') || bossName.includes('リヴァイアサン') || bossName.includes('コロッサス') || bossName.includes('ユグドラシル') || bossName.includes('アドウェルサ') || bossName.includes('セレスト')))
         askHelp = true
     catch e
@@ -119,11 +122,15 @@ mainBattle = ->
     done = false
     # 複数回バトルの最後以外は攻撃のみ
     battleNums = $('.prt-battle-num .txt-info-num').children()
-    if localStorage.isStrongPlayer == 'true' and battleNums.length > 0 and battleNums[0].className != battleNums[battleNums.length - 1].className
+    if localStorage.treasure == 'true' or (localStorage.isStrongPlayer == 'true' and localStorage.fullPowerSolo == 'false' and battleNums.length > 0 and battleNums[0].className != battleNums[battleNums.length - 1].className)
       $('[ability-recast=0]').each ->
         $this = $(this)
         name = $this.attr('ability-name')
         if ['フォーカス', '錬成:キュアポーション'].includes(name)
+          $this.trigger 'tap'
+          done = true
+          return false
+        if localStorage.treasure == 'true' and (name == 'トレジャーハントIII' or name == 'グラビティ')
           $this.trigger 'tap'
           done = true
           return false
@@ -286,7 +293,7 @@ mainBattle = ->
         $('.btn-lock').trigger 'tap'
         return next()
     assist = $('.btn-assist:visible')
-    if stage.pJsnData.assist?[1]?.is_enable && assist.length > 0 and !assist.hasClass('disable') and (!hasPotion or stage.gGameStatus.turn >= 10 or stage.gGameStatus.lose)
+    if stage.pJsnData.assist?[1]?.is_enable && assist.length > 0 and !assist.hasClass('disable') and (!hasPotion or stage.gGameStatus.turn >= 20 or stage.gGameStatus.lose)
       $('.btn-assist:visible').trigger 'tap'
       wait '.pop-start-assist .btn-usual-text', (e) ->
         e.trigger 'tap'
@@ -311,7 +318,7 @@ mainBattle = ->
 
 
 showStatus = ->
-  keys = ['autoSolo', 'isStrongPlayer', 'autoMulti', 'restartAuto', 'autoCoop']
+  keys = ['autoSolo', 'isStrongPlayer', 'autoMulti', 'restartAuto', 'autoCoop', 'fullPowerSolo', 'treasure']
   panel = $('#my-panel')
   _.each keys, (key) ->
     dom = $('<div><label class="local-storage-status"><input type="checkbox" />' + key + '</label></div>')

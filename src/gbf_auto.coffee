@@ -22,9 +22,10 @@ basicAutoPlay = ->
     thisName = $('.prt-popup-body .item-name').text()
     if location.href.includes('#casino/exchange') && title == '交換確認' && name != thisName
       name = thisName
-      last = $('.num-set').find('option').last()
-      Game.view.exchangeNumber = last.val()
-      last.attr('selected', 'selected')
+      if $('.num-set').length > 0
+        last = $('.num-set').find('option').last()
+        Game.view.exchangeNumber = last.val()
+        last.attr('selected', 'selected')
     if location.href.includes('#casino/exchange') && title == '交換完了'
       $('.btn-usual-ok').trigger('tap')
   ), 500)

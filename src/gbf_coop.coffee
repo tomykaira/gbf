@@ -43,14 +43,40 @@ f = ->
     if $('.prt-popup-header').text() == '退室完了'
       tap '.btn-usual-close'
 
+    keys = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ex']
+    if location.href.match(/gbf.game.mbga.jp.*#coopraid/)
+      if $('#coop-selector').length == 0
+        selector = $('<div id="coop-selector">')
+        _.each keys, (key) ->
+          dom = $('<div><label class="local-storage-status"><input type="checkbox" />' + key + '</label></div>')
+          dom.find('input[type=checkbox]').on 'change', (e) ->
+            $target = $(e.currentTarget)
+            active = $target.prop('checked')
+            localStorage['coop_' + key] = if active then 'true' else 'false'
+            if active
+              $target.parent().addClass('active')
+            else
+              $target.parent().removeClass('active')
+          .prop('checked', localStorage['coop_' + key] == 'true').trigger('change')
+          selector.append(dom)
+        $('#my-panel').append(selector)
     if location.href.match(/gbf.game.mbga.jp.*#coopraid\/offer/)
       # 1: だれでも, 2: friend, 3: guild, 4: pandemo, 5: drop, 6: daily
-      preferredTypes = [4]
-      # preferredTypes = [5, 6]
-      preferredComment = ['コロ', 'サジ', '匙', 'EX', 'ex', 'パンデモ', 'ゼプ', 'アグ', '階層', 'E3', 'e3', 'E4', 'e4']
-      # preferredComment = ['H1', 'ハード', 'hard']
+      preferredTypes = []
+      preferredComment = []
+      _.each keys, (key) ->
+        if localStorage['coop_' + key] == 'true'
+          if key == 'ex'
+            preferredComment.push('コロ', 'サジ', '匙', 'EX', 'ex', 'パンデモ', 'ゼプ', 'アグ', '階層', 'E3', 'e3', 'E4', 'e4')
+            preferredTypes.push(4)
+          else
+            unless _.include(preferredComment, 'ハード')
+              preferredComment.push('ハード', 'hard', 'Hard', 'HARD', 'デイリー')
+            preferredComment.push(key, key.toUpperCase())
+            preferredTypes.push(5, 6)
+
       ownerLevelCap = 90
-      ngWords = ['順', '巡', '貼り合い', 'スライム', 'スラ爆', '募集']
+      ngWords = ['順', '巡', '貼り合い', 'スライム', 'スラ爆', '募集', 'ノーマル']
       iid = setInterval ->
         if $('#loading:visible').length == 0
           clearInterval(iid)

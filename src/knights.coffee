@@ -53,7 +53,7 @@ ngAuto = ->
         localStorage.returningFromFlash = 'false'
         location.reload()
         return clearInterval(iid)
-      button = if localStorage.isStrongPlayer == 'true' then '#js-bp1-attack' else '#js-bp3-attack'
+      button = '#js-bp1-attack' # if localStorage.isStrongPlayer == 'true' then '#js-bp1-attack' else '#js-bp3-attack'
       if $(button + '-btn-off').length > 0
         location.href = 'http://g12013914.sp.pf.mbga.jp/?url=http%3A%2F%2F125.6.161.10%2Fgame%2Fmission'
         localStorage.autoSelectFirstQuest = 'true'
