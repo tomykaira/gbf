@@ -1,7 +1,9 @@
 ngAuto = ->
   window.tapEvent = 'raw'
+  window.log = ->
+    console.log.apply console, arguments
+    return
 
-  delete console
   unless localStorage.todayCount
     localStorage.todayCount = '0'
   iid = setInterval((->
@@ -43,7 +45,7 @@ ngAuto = ->
         wait '.exec-btn a[href*="mission"]', (e) ->
           count = parseInt(localStorage.todayCount) + 1
           localStorage.todayCount = count
-          console.log("Beat #{count} mobs")
+          log("Beat #{count} mobs")
           if count >= 3
             location.href = 'http://g12013914.sp.pf.mbga.jp/?url=http%3A%2F%2F125.6.161.10%2Fgame%2Fcollaborationevent%2Findex%2F27'
           else

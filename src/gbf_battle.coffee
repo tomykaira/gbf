@@ -212,7 +212,7 @@ mainBattle = ->
           '壱之舞・神楽＋'
         ].indexOf(name) >= 0
         # 対象選択が面倒なのでつかわない
-      else if type.indexOf('heal') >= 0 or ['メディク'].indexOf(name) >= 0
+      else if type.indexOf('heal') >= 0 or ['メディク', 'ウィム・ロマンティック＋'].indexOf(name) >= 0
         if hpPercent < 75
           $this.trigger 'tap'
           done = true
