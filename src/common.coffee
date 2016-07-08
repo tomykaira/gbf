@@ -87,7 +87,8 @@ f = ->
     window.ontouchmove			= null;
     window.ontouchend			= (e) -> fireEvent(e, 'touchend')
 
-  window.innerWidth = 480
+  if location.href.match(/sp.pf.mbga.jp\/12008305\/.*%2Fidolmaster%2Fsmart_phone_flash%2Fconvert_game_center%2Fdice_de_survival%3F/)
+    window.innerWidth = 480 if localStorage.autoSurvive == 'true'
 
   setTimeout ->
     iframe = document.createElement('iframe')

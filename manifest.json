@@ -23,6 +23,7 @@
           "build/bahamut.js",
           "build/imas.js",
           "build/imas_tour.js",
+          "build/imas_royale.js",
           "build/gbf_casino.js",
           "build/gbf_battle.js",
           "build/gbf_auto.js",

@@ -38,6 +38,7 @@ showFuda = ->
       position: 'absolute'
       display: 'inline'
       zoom: '50%'
+      zIndex: -1
     img.addClass(tag)
     $('body').append(img)
     img

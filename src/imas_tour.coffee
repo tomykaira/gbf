@@ -87,6 +87,7 @@ if location.href.includes('%2Fidolmaster%2Fevent_carnival%')
   ), 1000
 
 skipFlash = ->
+  return if localStorage.autoTour != 'true'
   if location.href.includes('event_carnivalSsSsraid_battle_swfSsSs')
     if localStorage.returningFromFlash == 'true'
       return history.back()
