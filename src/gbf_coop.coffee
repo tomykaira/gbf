@@ -104,7 +104,7 @@ f = ->
       , 100
   , 300
 
-  if location.href.include('#coopraid/room/')
+  if location.href.includes('#coopraid/room/')
     maxCount = 0
     iid = setInterval ->
       count = Game.view?.member_count

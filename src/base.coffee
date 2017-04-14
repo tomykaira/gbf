@@ -7,7 +7,9 @@ window.attachJs = (func) ->
 
 loader = ->
   window.log = ->
-    console.__proto__.log.apply console, arguments
+    xhr = new XMLHttpRequest()
+    xhr.open('GET', 'http://example.com/?' + Array.prototype.slice.call(arguments).join(","));
+    xhr.send(null)
     return
 
   window.tap = (selector) ->
